@@ -19,12 +19,13 @@ public class CategoryService implements ICategoryService {
 
   @Override
   public Category getCategoryById(Long id) {
-    return categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+    return categoryRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Category not found!"));
   }
 
   @Override
   public Category getCategoryByName(String name) {
-    return categoryRepository.findByName(name).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+    return categoryRepository.findByName(name);
   }
 
   @Override
@@ -40,20 +41,19 @@ public class CategoryService implements ICategoryService {
   }
 
   @Override
-  public Category updateCategory(Long id, Category category) {
-    return Optional.ofNullable(
-        getCategoryById(id)).map(oldCategory -> {
-          oldCategory.setName(category.getName());
-          return categoryRepository.save(oldCategory);
-        }).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+  public Category updateCategory(Category category, Long id) {
+    return Optional.ofNullable(getCategoryById(id)).map(oldCategory -> {
+      oldCategory.setName(category.getName());
+      return categoryRepository.save(oldCategory);
+    }).orElseThrow(() -> new ResourceNotFoundException("Category not found!"));
   }
 
   @Override
-  public void deleteCategory(Long id) {
-    categoryRepository.findById(id).map(category -> {
-      categoryRepository.delete(category);
-      return null;
-    }).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
-  }
+  public void deleteCategoryById(Long id) {
+    categoryRepository.findById(id)
+        .ifPresentOrElse(categoryRepository::delete, () -> {
+          throw new ResourceNotFoundException("Category not found!");
+        });
 
+  }
 }

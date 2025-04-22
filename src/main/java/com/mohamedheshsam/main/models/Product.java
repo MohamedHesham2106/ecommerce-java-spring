@@ -29,13 +29,10 @@ public class Product {
   private int inventory;
   private String description;
 
-  // category doesn't depend on product nor vice versa
   @ManyToOne(cascade = CascadeType.ALL)
-  // foreign key in product table
-  @JoinColumn(name = "category_id", nullable = false)
+  @JoinColumn(name = "category_id")
   private Category category;
 
-  // remove images if orphaned
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Image> images;
 

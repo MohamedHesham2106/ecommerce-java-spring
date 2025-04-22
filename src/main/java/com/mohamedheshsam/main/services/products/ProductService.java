@@ -22,16 +22,19 @@ public class ProductService implements IProductService {
   private final CategoryRepository categoryRepository;
 
   @Override
-  public Product addProduct(AddProductRequestDto product) {
-    // check if category exists
-    Category category = categoryRepository.findByName(product.getCategory().getName())
+  public Product addProduct(AddProductRequestDto request) {
+    // check if the category is found in the DB
+    // If Yes, set it as the new product category
+    // If No, the save it as a new category
+    // The set as the new product category.
+
+    Category category = Optional.ofNullable(categoryRepository.findByName(request.getCategory().getName()))
         .orElseGet(() -> {
-          Category newCategory = new Category();
-          newCategory.setName(product.getCategory().getName());
+          Category newCategory = new Category(request.getCategory().getName());
           return categoryRepository.save(newCategory);
         });
-    product.setCategory(category);
-    return productRepository.save(createProduct(product, category));
+    request.setCategory(category);
+    return productRepository.save(createProduct(request, category));
   }
 
   @Override
@@ -68,12 +71,12 @@ public class ProductService implements IProductService {
 
   @Override
   public List<Product> getProductsByBrand(String brand) {
-    return productRepository.findByBrandName(brand);
+    return productRepository.findByBrand(brand);
   }
 
   @Override
   public List<Product> getProductsByCategoryAndBrand(String category, String brand) {
-    return productRepository.findProductsByCategoryNameAndBrand(category, brand);
+    return productRepository.findByCategoryNameAndBrand(category, brand);
   }
 
   @Override
@@ -93,20 +96,26 @@ public class ProductService implements IProductService {
 
   // Helpers
 
-  private Product updateExistingProduct(Product existingProduct, ProductUpdateRequest productUpdateRequest) {
-    existingProduct.setName(productUpdateRequest.getName());
-    existingProduct.setBrand(productUpdateRequest.getBrand());
-    existingProduct.setPrice(productUpdateRequest.getPrice());
-    existingProduct.setInventory(productUpdateRequest.getInventory());
-    existingProduct.setDescription(productUpdateRequest.getDescription());
-    Category category = categoryRepository.findByName(productUpdateRequest.getCategory().getName())
-        .orElseThrow(() -> new ProductNotFoundException("Category not found"));
+  private Product updateExistingProduct(Product existingProduct, ProductUpdateRequest request) {
+    existingProduct.setName(request.getName());
+    existingProduct.setBrand(request.getBrand());
+    existingProduct.setPrice(request.getPrice());
+    existingProduct.setInventory(request.getInventory());
+    existingProduct.setDescription(request.getDescription());
+
+    Category category = categoryRepository.findByName(request.getCategory().getName());
     existingProduct.setCategory(category);
     return existingProduct;
+
   }
 
-  private Product createProduct(AddProductRequestDto product, Category category) {
-    return new Product(product.getName(), product.getBrand(), product.getPrice(), product.getInventory(),
-        product.getDescription(), category);
+  private Product createProduct(AddProductRequestDto request, Category category) {
+    return new Product(
+        request.getName(),
+        request.getBrand(),
+        request.getPrice(),
+        request.getInventory(),
+        request.getDescription(),
+        category);
   }
 }
