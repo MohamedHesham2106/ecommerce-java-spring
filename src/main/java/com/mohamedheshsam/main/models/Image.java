@@ -2,6 +2,8 @@ package com.mohamedheshsam.main.models;
 
 import java.sql.Blob;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,10 +29,12 @@ public class Image {
   private String fileType;
 
   @Lob
+  @JsonIgnore
   private Blob image;
   private String downloadUrl;
 
   @ManyToOne
   @JoinColumn(name = "product_id", nullable = false)
+  @JsonIgnore
   private Product product;
 }

@@ -3,6 +3,8 @@ package com.mohamedheshsam.main.models;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -34,6 +36,7 @@ public class Product {
   private Category category;
 
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+  @JsonIgnore
   private List<Image> images;
 
   public Product(String name, String brand, BigDecimal price, int inventory, String description, Category category) {

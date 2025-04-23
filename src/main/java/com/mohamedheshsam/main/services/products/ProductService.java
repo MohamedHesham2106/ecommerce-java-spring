@@ -153,4 +153,9 @@ public class ProductService implements IProductService {
     productDto.setImages(imageDtos);
     return productDto;
   }
+
+  @Override
+  public void saveProduct(Product product) {
+    productRepository.save(product);
+  }
 }

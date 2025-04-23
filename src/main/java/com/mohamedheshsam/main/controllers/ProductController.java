@@ -99,20 +99,22 @@ public class ProductController {
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
           .body(new ApiResponse("No products found", null));
     }
-    return ResponseEntity.ok(new ApiResponse("Products retrieved successfully", products));
+    List<ProductDto> productDtos = productService.getConvertedProducts(products);
+    return ResponseEntity.ok(new ApiResponse("Products retrieved successfully", productDtos));
   }
 
   @GetMapping(params = { "category", "brand" })
-  public ResponseEntity<ApiResponse> getProductByCategoryAndBrand(@RequestParam String category,
+  public ResponseEntity<ApiResponse> getProductByCategoryAndBrand(
+      @RequestParam String category,
       @RequestParam String brand) {
     try {
       List<Product> products = productService.getProductsByCategoryAndBrand(category, brand);
       if (products.isEmpty()) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(new ApiResponse("No products found", null));
-      } else {
-        return ResponseEntity.ok(new ApiResponse("Products retrieved successfully", products));
       }
+      List<ProductDto> productDtos = productService.getConvertedProducts(products);
+      return ResponseEntity.ok(new ApiResponse("Products retrieved successfully", productDtos));
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(new ApiResponse("Failed to retrieve products", null));
@@ -126,9 +128,9 @@ public class ProductController {
       if (products.isEmpty()) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(new ApiResponse("No products found", null));
-      } else {
-        return ResponseEntity.ok(new ApiResponse("Products retrieved successfully", products));
       }
+      List<ProductDto> productDtos = productService.getConvertedProducts(products);
+      return ResponseEntity.ok(new ApiResponse("Products retrieved successfully", productDtos));
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(new ApiResponse("Failed to retrieve products", null));
@@ -142,9 +144,9 @@ public class ProductController {
       if (products.isEmpty()) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(new ApiResponse("No products found", null));
-      } else {
-        return ResponseEntity.ok(new ApiResponse("Products retrieved successfully", products));
       }
+      List<ProductDto> productDtos = productService.getConvertedProducts(products);
+      return ResponseEntity.ok(new ApiResponse("Products retrieved successfully", productDtos));
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(new ApiResponse("Failed to retrieve products", null));
@@ -158,9 +160,9 @@ public class ProductController {
       if (products.isEmpty()) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(new ApiResponse("No products found", null));
-      } else {
-        return ResponseEntity.ok(new ApiResponse("Products retrieved successfully", products));
       }
+      List<ProductDto> productDtos = productService.getConvertedProducts(products);
+      return ResponseEntity.ok(new ApiResponse("Products retrieved successfully", productDtos));
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(new ApiResponse("Failed to retrieve products", null));

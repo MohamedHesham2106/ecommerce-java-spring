@@ -34,4 +34,5 @@ public interface IProductService {
 
   ProductDto convertToDto(Product product);
 
+  void saveProduct(Product product);
 }
