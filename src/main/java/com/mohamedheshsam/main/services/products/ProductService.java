@@ -5,14 +5,19 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.mohamedheshsam.main.dtos.ImageDto;
+import com.mohamedheshsam.main.dtos.ProductDto;
 import com.mohamedheshsam.main.exceptions.ProductNotFoundException;
+import com.mohamedheshsam.main.exceptions.ResourceNotFoundException;
 import com.mohamedheshsam.main.models.Category;
+import com.mohamedheshsam.main.models.Image;
 import com.mohamedheshsam.main.models.Product;
 import com.mohamedheshsam.main.requests.AddProductRequestDto;
 import com.mohamedheshsam.main.requests.ProductUpdateRequest;
 import com.mohamedheshsam.main.respository.CategoryRepository;
+import com.mohamedheshsam.main.respository.ImageRepository;
 import com.mohamedheshsam.main.respository.ProductRepository;
-
+import org.modelmapper.ModelMapper;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -20,6 +25,8 @@ import lombok.RequiredArgsConstructor;
 public class ProductService implements IProductService {
   private final ProductRepository productRepository;
   private final CategoryRepository categoryRepository;
+  private final ModelMapper modelMapper;
+  private final ImageRepository imageRepository;
 
   @Override
   public Product addProduct(AddProductRequestDto request) {
@@ -47,7 +54,8 @@ public class ProductService implements IProductService {
 
   @Override
   public Product getProductById(Long id) {
-    return productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found"));
+    return productRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Product not found!"));
   }
 
   @Override
@@ -117,5 +125,32 @@ public class ProductService implements IProductService {
         request.getInventory(),
         request.getDescription(),
         category);
+  }
+
+  @Override
+  public List<ProductDto> getConvertedProducts(List<Product> products) {
+    return products.stream().map(this::convertToDto).toList();
+  }
+
+  @Override
+  public ProductDto convertToDto(Product product) {
+    ProductDto productDto = modelMapper.map(product, ProductDto.class);
+    List<Image> images = imageRepository.findByProductId(product.getId());
+    List<ImageDto> imageDtos = images.stream()
+        .map(image -> {
+          ImageDto imageDto = modelMapper.map(image, ImageDto.class);
+          try {
+            // Convert Blob to Base64
+            byte[] imageBytes = image.getImage().getBytes(1, (int) image.getImage().length());
+            String base64Image = java.util.Base64.getEncoder().encodeToString(imageBytes);
+            imageDto.setBase64Image(base64Image);
+          } catch (Exception e) {
+            throw new RuntimeException("Failed to convert image to Base64", e);
+          }
+          return imageDto;
+        })
+        .toList();
+    productDto.setImages(imageDtos);
+    return productDto;
   }
 }

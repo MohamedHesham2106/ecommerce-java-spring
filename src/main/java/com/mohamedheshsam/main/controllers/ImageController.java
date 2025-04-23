@@ -1,7 +1,9 @@
 package com.mohamedheshsam.main.controllers;
 
+import java.sql.SQLException;
 import java.util.List;
 
+import org.apache.tomcat.util.file.ConfigurationSource.Resource;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -41,23 +43,16 @@ public class ImageController {
     }
   }
 
-  @GetMapping("/image/download/{id}")
-  public ResponseEntity<ApiResponse> downloadImage(@PathVariable Long id) {
-    try {
-      Image image = imageService.getImageById(id);
-      ByteArrayResource resource = new ByteArrayResource(image.getImage().getBytes(1, (int) image.getImage().length()));
-      return ResponseEntity.ok()
-          .contentType(MediaType.parseMediaType(image.getFileType()))
-          .header(HttpHeaders.CONTENT_DISPOSITION,
-              "attachment; filename=\"" + image.getFileName() + "\"")
-          .body(new ApiResponse("Image downloaded successfully", resource));
-    } catch (Exception e) {
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body(new ApiResponse("Failed to download image", e.getMessage()));
-    }
+  @GetMapping("/download/{id}")
+  public ResponseEntity<ByteArrayResource> downloadImage(@PathVariable Long id) throws SQLException {
+    Image image = imageService.getImageById(id);
+    ByteArrayResource resource = new ByteArrayResource(image.getImage().getBytes(1, (int) image.getImage().length()));
+    return ResponseEntity.ok().contentType(MediaType.parseMediaType(image.getFileType()))
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + image.getFileName() + "\"")
+        .body(resource);
   }
 
-  @PutMapping("/image/{id}/update")
+  @PutMapping("/{id}")
   public ResponseEntity<ApiResponse> updateImage(@PathVariable Long id, @RequestParam MultipartFile file) {
     try {
       Image image = imageService.getImageById(id);
@@ -74,7 +69,7 @@ public class ImageController {
     }
   }
 
-  @DeleteMapping("/image/{id}/update")
+  @DeleteMapping("/{id}")
   public ResponseEntity<ApiResponse> deleteImage(@PathVariable Long id) {
     try {
       Image image = imageService.getImageById(id);

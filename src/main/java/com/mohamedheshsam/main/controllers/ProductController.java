@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mohamedheshsam.main.dtos.ProductDto;
 import com.mohamedheshsam.main.exceptions.ProductNotFoundException;
+import com.mohamedheshsam.main.exceptions.ResourceNotFoundException;
 import com.mohamedheshsam.main.models.Product;
 import com.mohamedheshsam.main.requests.AddProductRequestDto;
 import com.mohamedheshsam.main.requests.ProductUpdateRequest;
@@ -31,25 +33,19 @@ public class ProductController {
 
   @GetMapping()
   public ResponseEntity<ApiResponse> getAllProducts() {
-    try {
-      return ResponseEntity.ok(new ApiResponse("Retrieved Products successfully", productService.getAllProducts()));
-    } catch (Exception e) {
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body(new ApiResponse("Failed to retrieve products", null));
-    }
+    List<Product> products = productService.getAllProducts();
+    List<ProductDto> convertedProducts = productService.getConvertedProducts(products);
+    return ResponseEntity.ok(new ApiResponse("success", convertedProducts));
   }
 
   @GetMapping("/{id}")
   public ResponseEntity<ApiResponse> getProductById(@PathVariable Long id) {
     try {
       Product product = productService.getProductById(id);
-      return ResponseEntity.ok(new ApiResponse("Retrieved Product successfully", product));
-    } catch (ProductNotFoundException e) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND)
-          .body(new ApiResponse(e.getMessage(), null));
-    } catch (Exception e) {
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body(new ApiResponse("Failed to retrieve product", null));
+      ProductDto productDto = productService.convertToDto(product);
+      return ResponseEntity.ok(new ApiResponse("success", productDto));
+    } catch (ResourceNotFoundException e) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(e.getMessage(), null));
     }
   }
 
@@ -95,21 +91,15 @@ public class ProductController {
   }
 
   @GetMapping(params = { "brand", "name" })
-  public ResponseEntity<ApiResponse> getProductByBrandAndName(@RequestParam String brand,
+  public ResponseEntity<ApiResponse> getProductByBrandAndName(
+      @RequestParam String brand,
       @RequestParam String name) {
-    try {
-      List<Product> products = productService.getProductsByCategoryAndBrand(name, brand);
-      if (products.isEmpty()) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(new ApiResponse("No products found", null));
-      } else {
-        return ResponseEntity.ok(new ApiResponse("Products retrieved successfully", products));
-      }
-    } catch (Exception e) {
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body(new ApiResponse("Failed to retrieve products", null));
+    List<Product> products = productService.getProductsByBrandAndName(brand, name);
+    if (products.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(new ApiResponse("No products found", null));
     }
-
+    return ResponseEntity.ok(new ApiResponse("Products retrieved successfully", products));
   }
 
   @GetMapping(params = { "category", "brand" })

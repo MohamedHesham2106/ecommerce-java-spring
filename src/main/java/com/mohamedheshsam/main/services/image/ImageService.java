@@ -17,6 +17,7 @@ import com.mohamedheshsam.main.models.Image;
 import com.mohamedheshsam.main.models.Product;
 import com.mohamedheshsam.main.respository.ImageRepository;
 import com.mohamedheshsam.main.respository.ProductRepository;
+import com.mohamedheshsam.main.services.products.IProductService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,11 +25,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ImageService implements IImageService {
   private final ImageRepository imageRepository;
-  private final ProductRepository productRepository;
+  private final IProductService productService;
 
   @Override
   public Image getImageById(Long id) {
-    return imageRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Image not found"));
+    return imageRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("No image found with id: " + id));
   }
 
   @Override
@@ -41,8 +43,8 @@ public class ImageService implements IImageService {
 
   @Override
   public List<ImageDto> saveImages(List<MultipartFile> files, Long productId) {
-    Product product = productRepository.findById(productId)
-        .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+    Product product = productService.getProductById(productId);
+
     List<ImageDto> savedImageDto = new ArrayList<>();
     for (MultipartFile file : files) {
       try {
@@ -54,20 +56,20 @@ public class ImageService implements IImageService {
 
         String buildDownloadUrl = "/api/v1/images/image/download/";
         String downloadUrl = buildDownloadUrl + image.getId();
-
         image.setDownloadUrl(downloadUrl);
         Image savedImage = imageRepository.save(image);
+
         savedImage.setDownloadUrl(buildDownloadUrl + savedImage.getId());
         imageRepository.save(savedImage);
 
         ImageDto imageDto = new ImageDto();
-        imageDto.setImageId(savedImage.getId());
-        imageDto.setImageName(savedImage.getFileName());
+        imageDto.setId(savedImage.getId());
+        imageDto.setFileName(savedImage.getFileName());
         imageDto.setDownloadUrl(savedImage.getDownloadUrl());
         savedImageDto.add(imageDto);
 
       } catch (IOException | SQLException e) {
-        throw new RuntimeException("Error processing file: " + e.getMessage());
+        throw new RuntimeException(e.getMessage());
       }
     }
     return savedImageDto;
@@ -82,7 +84,7 @@ public class ImageService implements IImageService {
       image.setImage(new SerialBlob(file.getBytes()));
       imageRepository.save(image);
     } catch (IOException | SQLException e) {
-      throw new RuntimeException("Error processing image: " + e.getMessage());
+      throw new RuntimeException(e.getMessage());
     }
 
   }
