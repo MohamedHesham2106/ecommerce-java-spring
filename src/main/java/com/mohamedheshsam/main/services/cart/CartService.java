@@ -84,4 +84,9 @@ public class CartService implements ICartService {
     return cartRepository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
   }
+
+  @Override
+  public Cart getCartByUserId(Long userId) {
+    return cartRepository.findByUserId(userId);
+  }
 }

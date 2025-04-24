@@ -13,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,6 +33,11 @@ public class Cart {
   @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
   @JsonIgnore
   private Set<CartItem> items = new HashSet<>();
+
+  @OneToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = "user_id")
+  @JsonIgnore
+  private User user;
 
   public void addItem(CartItem item) {
     this.items.add(item);
