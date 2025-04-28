@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import com.mohamedheshsam.main.dtos.ImageDto;
 import com.mohamedheshsam.main.dtos.ProductDto;
 import com.mohamedheshsam.main.exceptions.ProductNotFoundException;
 import com.mohamedheshsam.main.exceptions.ResourceNotFoundException;
@@ -19,6 +18,7 @@ import com.mohamedheshsam.main.respository.ImageRepository;
 import com.mohamedheshsam.main.respository.ProductRepository;
 import org.modelmapper.ModelMapper;
 import lombok.RequiredArgsConstructor;
+import com.mohamedheshsam.main.exceptions.ImageConversionException;
 
 @Service
 @RequiredArgsConstructor
@@ -136,21 +136,17 @@ public class ProductService implements IProductService {
   public ProductDto convertToDto(Product product) {
     ProductDto productDto = modelMapper.map(product, ProductDto.class);
     List<Image> images = imageRepository.findByProductId(product.getId());
-    List<ImageDto> imageDtos = images.stream()
+    List<String> base64Images = images.stream()
         .map(image -> {
-          ImageDto imageDto = modelMapper.map(image, ImageDto.class);
           try {
-            // Convert Blob to Base64
             byte[] imageBytes = image.getImage().getBytes(1, (int) image.getImage().length());
-            String base64Image = java.util.Base64.getEncoder().encodeToString(imageBytes);
-            imageDto.setBase64Image(base64Image);
+            return java.util.Base64.getEncoder().encodeToString(imageBytes);
           } catch (Exception e) {
-            throw new RuntimeException("Failed to convert image to Base64", e);
+            throw new ImageConversionException("Failed to convert image to Base64", e);
           }
-          return imageDto;
         })
         .toList();
-    productDto.setImages(imageDtos);
+    productDto.setBase64Images(base64Images);
     return productDto;
   }
 

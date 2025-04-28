@@ -12,13 +12,11 @@ import com.mohamedheshsam.main.dtos.UserDto;
 import com.mohamedheshsam.main.exceptions.AlreadyExistException;
 import com.mohamedheshsam.main.exceptions.ResourceNotFoundException;
 import com.mohamedheshsam.main.models.User;
-import com.mohamedheshsam.main.requests.CreateUserRequest;
 import com.mohamedheshsam.main.requests.UserUpdateRequest;
 import com.mohamedheshsam.main.responses.ApiResponse;
 import com.mohamedheshsam.main.services.user.IUserService;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -39,16 +37,7 @@ public class UserController {
     }
   }
 
-  @PostMapping
-  public ResponseEntity<ApiResponse> createUser(@RequestBody CreateUserRequest request) {
-    try {
-      User user = userService.createUser(request);
-      UserDto userDto = userService.convertUserToDto(user);
-      return ResponseEntity.ok(new ApiResponse("Create User Success!", userDto));
-    } catch (AlreadyExistException e) {
-      return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse(e.getMessage(), null));
-    }
-  }
+
 
   @PutMapping("/{id}")
   public ResponseEntity<ApiResponse> updateUser(@RequestBody UserUpdateRequest request, @PathVariable Long id) {

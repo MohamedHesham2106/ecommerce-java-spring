@@ -4,18 +4,19 @@ import java.math.BigDecimal;
 
 import com.mohamedheshsam.main.dtos.CartDto;
 import com.mohamedheshsam.main.models.Cart;
+import com.mohamedheshsam.main.models.User;
 
 public interface ICartService {
-  CartDto getCart(Long id);
-
-  Cart getCartEntity(Long id);
+  Cart getCart(Long id);
 
   void clearCart(Long id);
 
   BigDecimal getTotalPrice(Long id);
 
-  Long initializeNewCart();
+  Cart initializeNewCart(User user);
 
   Cart getCartByUserId(Long userId);
+
+  CartDto convertToDto(Cart cart);
 
 }

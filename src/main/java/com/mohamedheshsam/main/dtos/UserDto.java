@@ -12,4 +12,5 @@ public class UserDto {
   private String email;
   private List<OrderDto> orders;
   private CartDto cart;
+  private List<String> roles;
 }

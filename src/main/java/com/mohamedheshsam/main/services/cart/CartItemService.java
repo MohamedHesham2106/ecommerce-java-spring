@@ -1,17 +1,23 @@
 package com.mohamedheshsam.main.services.cart;
 
 import java.math.BigDecimal;
+import java.util.List;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import com.mohamedheshsam.main.dtos.CartDto;
+import com.mohamedheshsam.main.dtos.CartItemDto;
 import com.mohamedheshsam.main.exceptions.ResourceNotFoundException;
 import com.mohamedheshsam.main.models.Cart;
 import com.mohamedheshsam.main.models.CartItem;
+import com.mohamedheshsam.main.models.Image;
 import com.mohamedheshsam.main.models.Product;
 import com.mohamedheshsam.main.respository.CartItemRepository;
 import com.mohamedheshsam.main.respository.CartRepository;
+import com.mohamedheshsam.main.respository.ImageRepository;
 import com.mohamedheshsam.main.services.products.IProductService;
+import com.mohamedheshsam.main.exceptions.ImageConversionException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,17 +28,17 @@ public class CartItemService implements ICartItemService {
   private final CartRepository cartRepository;
   private final IProductService productService;
   private final ICartService cartService;
+  private final ImageRepository imageRepository;
+  private final ModelMapper modelMapper;
 
   @Override
   public void addItemToCart(Long cartId, Long productId, int quantity) {
-    Cart cart = cartService.getCartEntity(cartId);
+    Cart cart = cartService.getCart(cartId);
     Product product = productService.getProductById(productId);
-
-    CartItem cartItem = cart.getItems().stream()
+    CartItem cartItem = cart.getItems()
+        .stream()
         .filter(item -> item.getProduct().getId().equals(productId))
-        .findFirst()
-        .orElse(new CartItem());
-
+        .findFirst().orElse(new CartItem());
     if (cartItem.getId() == null) {
       cartItem.setCart(cart);
       cartItem.setProduct(product);
@@ -41,44 +47,23 @@ public class CartItemService implements ICartItemService {
     } else {
       cartItem.setQuantity(cartItem.getQuantity() + quantity);
     }
-
     cartItem.setTotalPrice();
     cart.addItem(cartItem);
-
     cartItemRepository.save(cartItem);
     cartRepository.save(cart);
   }
 
   @Override
-  public CartDto removeItemFromCart(Long cartId, Long productId, Integer quantity) {
-    Cart cart = cartService.getCartEntity(cartId);
-    CartItem item = getCartItem(cartId, productId);
-
-    int toRemove = (quantity == null ? 1 : quantity);
-    if (toRemove < item.getQuantity()) {
-      item.setQuantity(item.getQuantity() - toRemove);
-      item.setTotalPrice();
-      cartItemRepository.save(item);
-    } else {
-      cart.removeItem(item);
-      cartItemRepository.delete(item);
-    }
-
-    BigDecimal totalAmount = cart.getItems().stream()
-        .map(CartItem::getTotalPrice)
-        .reduce(BigDecimal.ZERO, BigDecimal::add);
-    cart.setTotalAmount(totalAmount);
+  public void removeItemFromCart(Long cartId, Long productId) {
+    Cart cart = cartService.getCart(cartId);
+    CartItem itemToRemove = getCartItem(cartId, productId);
+    cart.removeItem(itemToRemove);
     cartRepository.save(cart);
-
-    return cartService.getCart(cartId);
   }
 
   @Override
   public void updateItemQuantity(Long cartId, Long productId, int quantity) {
-    // Fetch the cart
-    Cart cart = cartService.getCartEntity(cartId);
-
-    // Update the quantity of the specified CartItem
+    Cart cart = cartService.getCart(cartId);
     cart.getItems()
         .stream()
         .filter(item -> item.getProduct().getId().equals(productId))
@@ -88,26 +73,38 @@ public class CartItemService implements ICartItemService {
           item.setUnitPrice(item.getProduct().getPrice());
           item.setTotalPrice();
         });
-
-    // Recalculate the total amount of the cart
     BigDecimal totalAmount = cart.getItems()
-        .stream()
-        .map(CartItem::getTotalPrice)
+        .stream().map(CartItem::getTotalPrice)
         .reduce(BigDecimal.ZERO, BigDecimal::add);
-    cart.setTotalAmount(totalAmount);
 
-    // Save the updated cart
+    cart.setTotalAmount(totalAmount);
     cartRepository.save(cart);
   }
 
   @Override
   public CartItem getCartItem(Long cartId, Long productId) {
-    // Fetch the cart and find the specified CartItem
-    Cart cart = cartService.getCartEntity(cartId); // Use getCartEntity
+    Cart cart = cartService.getCart(cartId);
     return cart.getItems()
         .stream()
         .filter(item -> item.getProduct().getId().equals(productId))
-        .findFirst()
-        .orElseThrow(() -> new ResourceNotFoundException("Item not found in the cart"));
+        .findFirst().orElseThrow(() -> new ResourceNotFoundException("Item not found"));
+  }
+
+  @Override
+  public CartItemDto convertToDto(CartItem cartItem) {
+    CartItemDto cartItemDto = modelMapper.map(cartItem, CartItemDto.class);
+    List<Image> images = imageRepository.findByProductId(cartItem.getProduct().getId());
+    List<String> base64Images = images.stream()
+        .map(image -> {
+          try {
+            byte[] imageBytes = image.getImage().getBytes(1, (int) image.getImage().length());
+            return java.util.Base64.getEncoder().encodeToString(imageBytes);
+          } catch (Exception e) {
+            throw new ImageConversionException("Failed to convert image to Base64", e);
+          }
+        })
+        .toList();
+    cartItemDto.setBase64Images(base64Images);
+    return cartItemDto;
   }
 }
