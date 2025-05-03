@@ -5,11 +5,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.List;
 
+import com.mohamedheshsam.main.enums.RoleType;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class JwtResponse {
-  private Long id;
   private String token;
-  private List<String> roles;
 }

@@ -9,6 +9,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.mohamedheshsam.main.models.User;
+import com.mohamedheshsam.main.enums.RoleType;
 
 import java.util.Collection;
 import java.util.List;
@@ -25,16 +26,12 @@ public class ShopUserDetails implements UserDetails {
   private Collection<GrantedAuthority> authorities;
 
   public static ShopUserDetails buildUserDetails(User user) {
-    List<GrantedAuthority> authorities = user.getRoles()
-        .stream()
-        .map(role -> new SimpleGrantedAuthority(role.getName().name()))
-        .collect(Collectors.toList());
-
+    GrantedAuthority authority = new SimpleGrantedAuthority(user.getRole().name());
     return new ShopUserDetails(
         user.getId(),
         user.getEmail(),
         user.getPassword(),
-        authorities);
+        List.of(authority));
   }
 
   @Override

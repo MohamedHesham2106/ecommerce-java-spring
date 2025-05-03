@@ -8,7 +8,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mohamedheshsam.main.dtos.UserDto;
+import com.mohamedheshsam.main.enums.RoleType;
 import com.mohamedheshsam.main.exceptions.AlreadyExistException;
 import com.mohamedheshsam.main.models.User;
 import com.mohamedheshsam.main.requests.CreateUserRequest;
@@ -34,7 +34,7 @@ public class AuthController {
   private final IUserService userService;
   private final JwtUtils jwtUtils;
 
-  @PostMapping("signup")
+  @PostMapping("register")
   public ResponseEntity<ApiResponse> createUser(@RequestBody CreateUserRequest request) {
     try {
       User user = userService.createUser(request);
@@ -53,14 +53,11 @@ public class AuthController {
               request.getEmail(), request.getPassword()));
       SecurityContextHolder.getContext().setAuthentication(authentication);
       String jwt = jwtUtils.generateTokenForUser(authentication);
-      ShopUserDetails userDetails = (ShopUserDetails) authentication.getPrincipal();
-      JwtResponse jwtResponse = new JwtResponse(userDetails.getId(), jwt, userDetails.getAuthorities().stream()
-          .map(GrantedAuthority::getAuthority).toList());
-      return ResponseEntity.ok(new ApiResponse("Login Success!", jwtResponse));
+      return ResponseEntity.ok(new ApiResponse("Login Success!",
+          new JwtResponse(jwt)));
     } catch (AuthenticationException e) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(e.getMessage(), null));
     }
-
   }
 
 }

@@ -11,7 +11,6 @@ import com.mohamedheshsam.main.enums.RoleType;
 import com.mohamedheshsam.main.exceptions.AlreadyExistException;
 import com.mohamedheshsam.main.exceptions.ResourceNotFoundException;
 import com.mohamedheshsam.main.models.User;
-import com.mohamedheshsam.main.models.Role;
 import com.mohamedheshsam.main.requests.CreateUserRequest;
 import com.mohamedheshsam.main.requests.UserUpdateRequest;
 import com.mohamedheshsam.main.respository.UserRepository;
@@ -38,17 +37,16 @@ public class UserService implements IUserService {
   @Override
   public User createUser(CreateUserRequest request) {
     return Optional.of(request)
-      .filter(user -> !userRepository.existsByEmail(request.getEmail()))
-      .map(req -> {
-        User user = new User();
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        Role defaultRole = new Role(RoleType.USER);
-        user.setRoles(Collections.singleton(defaultRole));
-        return userRepository.save(user);
-      }).orElseThrow(() -> new AlreadyExistException("The email " + request.getEmail() + " is already registered!"));
+        .filter(user -> !userRepository.existsByEmail(request.getEmail()))
+        .map(req -> {
+          User user = new User();
+          user.setEmail(request.getEmail());
+          user.setPassword(passwordEncoder.encode(request.getPassword()));
+          user.setFirstName(request.getFirstName());
+          user.setLastName(request.getLastName());
+          user.setRole(RoleType.USER); 
+          return userRepository.save(user);
+        }).orElseThrow(() -> new AlreadyExistException("The email " + request.getEmail() + " is already registered!"));
   }
 
   @Override
@@ -87,16 +85,7 @@ public class UserService implements IUserService {
     } else {
       userDto.setCart(null);
     }
-
-    // Map roles to RoleType and set them in UserDto
-    if (user.getRoles() != null) {
-      userDto.setRoles(user.getRoles().stream()
-          .map(role -> role.getName().name())
-          .toList());
-    } else {
-      userDto.setRoles(Collections.emptyList());
-    }
-
+    userDto.setRole(user.getRole());
     return userDto;
   }
 

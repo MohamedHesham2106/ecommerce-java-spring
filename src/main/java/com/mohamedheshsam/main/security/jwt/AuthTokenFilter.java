@@ -36,10 +36,9 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         var auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        // Add roles to the response
-        response.setHeader("Roles", String.join(",", userDetails.getAuthorities().stream()
-            .map(authority -> authority.getAuthority())
-            .toList()));
+        // Add role to the response
+        response.setHeader("Role",
+            userDetails.getAuthorities().stream().findFirst().map(authority -> authority.getAuthority()).orElse(""));
       }
     } catch (JwtException e) {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

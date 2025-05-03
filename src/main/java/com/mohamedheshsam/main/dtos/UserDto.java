@@ -2,6 +2,8 @@ package com.mohamedheshsam.main.dtos;
 
 import java.util.List;
 
+import com.mohamedheshsam.main.enums.RoleType;
+
 import lombok.Data;
 
 @Data
@@ -12,5 +14,5 @@ public class UserDto {
   private String email;
   private List<OrderDto> orders;
   private CartDto cart;
-  private List<String> roles;
+  private RoleType role; 
 }

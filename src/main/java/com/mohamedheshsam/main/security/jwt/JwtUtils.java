@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
+import com.mohamedheshsam.main.enums.RoleType;
 import com.mohamedheshsam.main.security.user.ShopUserDetails;
 
 import java.security.Key;
@@ -27,14 +28,13 @@ public class JwtUtils {
   public String generateTokenForUser(Authentication authentication) {
     ShopUserDetails userPrincipal = (ShopUserDetails) authentication.getPrincipal();
 
-    List<String> roles = userPrincipal.getAuthorities()
-        .stream()
-        .map(GrantedAuthority::getAuthority).toList();
+    RoleType role = userPrincipal.getAuthorities().stream().findFirst()
+        .map(authority -> RoleType.valueOf(authority.getAuthority())).orElse(null);
 
     return Jwts.builder()
         .setSubject(userPrincipal.getEmail())
         .claim("id", userPrincipal.getId())
-        .claim("roles", roles)
+        .claim("role", role)
         .setIssuedAt(new Date())
         .setExpiration(new Date((new Date()).getTime() + expirationTime))
         .signWith(key(), SignatureAlgorithm.HS256).compact();
