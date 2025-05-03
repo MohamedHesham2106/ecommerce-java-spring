@@ -30,6 +30,7 @@ public class Product {
   private BigDecimal price;
   private int inventory;
   private String description;
+  private Boolean isFeatured = false;
 
   @ManyToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = "category_id")
@@ -39,12 +40,15 @@ public class Product {
   @JsonIgnore
   private List<Image> images;
 
-  public Product(String name, String brand, BigDecimal price, int inventory, String description, Category category) {
+  public Product(String name, String brand, BigDecimal price, int inventory, String description, Category category,
+      Boolean isFeatured) {
     this.name = name;
     this.brand = brand;
     this.price = price;
     this.inventory = inventory;
     this.description = description;
     this.category = category;
+    this.isFeatured = isFeatured;
+
   }
 }

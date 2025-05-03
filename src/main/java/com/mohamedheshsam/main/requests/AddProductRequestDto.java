@@ -18,6 +18,7 @@ public class AddProductRequestDto {
   private BigDecimal price;
   private int inventory;
   private String description;
+  private Boolean isFeatured = false;
 
   @NotNull(message = "Category cannot be null")
   private CategoryDto category;

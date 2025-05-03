@@ -128,7 +128,7 @@ public class ProductService implements IProductService {
         req.getPrice(),
         req.getInventory(),
         req.getDescription(),
-        category);
+        category, req.getIsFeatured() != null && req.getIsFeatured());
   }
 
   private Product updateExistingProduct(Product existing, ProductUpdateRequest req) {
