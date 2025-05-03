@@ -12,7 +12,7 @@ public class CartItemDto {
   private BigDecimal unitPrice;
   private BigDecimal totalPrice;
   private ProductDto product;
-  private List<String> base64Images;
+  private List<ImageDto> imageUrls;
 
   // Getters and setters
   public Long getId() {
@@ -55,11 +55,11 @@ public class CartItemDto {
     this.product = product;
   }
 
-  public List<String> getBase64Images() {
-    return base64Images;
+  public List<ImageDto> getImageUrls() {
+    return imageUrls;
   }
 
-  public void setBase64Images(List<String> base64Images) {
-    this.base64Images = base64Images;
+  public void setImageUrls(List<ImageDto> imageUrls) {
+    this.imageUrls = imageUrls;
   }
 }

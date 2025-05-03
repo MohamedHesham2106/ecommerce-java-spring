@@ -1,5 +1,7 @@
 package com.mohamedheshsam.main.security.user;
 
+import com.mohamedheshsam.main.enums.RoleType;
+import com.mohamedheshsam.main.models.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,29 +10,27 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.mohamedheshsam.main.models.User;
-import com.mohamedheshsam.main.enums.RoleType;
-
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class ShopUserDetails implements UserDetails {
   private Long id;
   private String email;
   private String password;
-
+  private RoleType role;
   private Collection<GrantedAuthority> authorities;
 
-  public static ShopUserDetails buildUserDetails(User user) {
-    GrantedAuthority authority = new SimpleGrantedAuthority(user.getRole().name());
+  public static ShopUserDetails build(User user) {
+    GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
     return new ShopUserDetails(
         user.getId(),
         user.getEmail(),
         user.getPassword(),
+        user.getRole(),
         List.of(authority));
   }
 
@@ -51,21 +51,21 @@ public class ShopUserDetails implements UserDetails {
 
   @Override
   public boolean isAccountNonExpired() {
-    return UserDetails.super.isAccountNonExpired();
+    return true;
   }
 
   @Override
   public boolean isAccountNonLocked() {
-    return UserDetails.super.isAccountNonLocked();
+    return true;
   }
 
   @Override
   public boolean isCredentialsNonExpired() {
-    return UserDetails.super.isCredentialsNonExpired();
+    return true;
   }
 
   @Override
   public boolean isEnabled() {
-    return UserDetails.super.isEnabled();
+    return true;
   }
 }

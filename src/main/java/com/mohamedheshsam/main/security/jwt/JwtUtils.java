@@ -1,69 +1,81 @@
 package com.mohamedheshsam.main.security.jwt;
 
-import io.jsonwebtoken.*;
+import com.mohamedheshsam.main.security.user.ShopUserDetails;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.SignatureException;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.stereotype.Component;
+import jakarta.annotation.PostConstruct;
 
-import com.mohamedheshsam.main.enums.RoleType;
-import com.mohamedheshsam.main.security.user.ShopUserDetails;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
-import java.util.List;
 
 @Component
 public class JwtUtils {
 
-  @Value("${auth.token.jwtSecret}")
-  private String jwtSecret;
+  private final JwtProperties props;
+  private Key signingKey;
 
-  @Value("${auth.token.expirationInMils}")
-  private int expirationTime;
-
-  public String generateTokenForUser(Authentication authentication) {
-    ShopUserDetails userPrincipal = (ShopUserDetails) authentication.getPrincipal();
-
-    RoleType role = userPrincipal.getAuthorities().stream().findFirst()
-        .map(authority -> RoleType.valueOf(authority.getAuthority())).orElse(null);
-
-    return Jwts.builder()
-        .setSubject(userPrincipal.getEmail())
-        .claim("id", userPrincipal.getId())
-        .claim("role", role)
-        .setIssuedAt(new Date())
-        .setExpiration(new Date((new Date()).getTime() + expirationTime))
-        .signWith(key(), SignatureAlgorithm.HS256).compact();
-
+  public JwtUtils(JwtProperties props) {
+    this.props = props;
   }
 
-  private Key key() {
-    return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+  @PostConstruct
+  private void init() {
+    this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(props.getJwtSecret()));
+    System.out.println("[JwtUtils] Token expiration duration: " + props.getExpiration());
+  }
+
+  public String generateTokenForUser(Authentication authentication) {
+    ShopUserDetails user = (ShopUserDetails) authentication.getPrincipal();
+    long now = System.currentTimeMillis();
+    long expMillis = props.getExpiration().toMillis();
+    Date issuedAt = new Date(now);
+    Date expiration = new Date(now + expMillis);
+    System.out.println("[JwtUtils] Issued at: " + issuedAt + ", Expires at: " + expiration);
+
+    return Jwts.builder()
+        .setSubject(user.getEmail())
+        .claim("id", user.getId())
+        .claim("role", user.getRole().name())
+        .setIssuedAt(issuedAt)
+        .setExpiration(expiration)
+        .signWith(signingKey, SignatureAlgorithm.HS256)
+        .compact();
   }
 
   public String getUsernameFromToken(String token) {
-    return Jwts.parserBuilder()
-        .setSigningKey(key())
-        .build()
-        .parseClaimsJws(token)
-        .getBody().getSubject();
+    try {
+      return parseClaims(token).getSubject();
+    } catch (ExpiredJwtException e) {
+      throw new JwtException("Token expired at " + e.getClaims().getExpiration());
+    } catch (JwtException e) {
+      throw new JwtException("Invalid JWT: " + e.getMessage());
+    }
   }
 
   public boolean validateToken(String token) {
     try {
-      Jwts.parserBuilder()
-          .setSigningKey(key())
-          .build()
-          .parseClaimsJws(token);
+      parseClaims(token);
       return true;
-    } catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException | SignatureException
-        | IllegalArgumentException e) {
-      throw new JwtException(e.getMessage());
-
+    } catch (ExpiredJwtException e) {
+      throw new JwtException("Token expired at " + e.getClaims().getExpiration());
+    } catch (JwtException e) {
+      throw new JwtException("Invalid JWT: " + e.getMessage());
     }
+  }
+
+  private io.jsonwebtoken.Claims parseClaims(String token) {
+    return Jwts.parserBuilder()
+        .setSigningKey(signingKey)
+        .setAllowedClockSkewSeconds(60)
+        .build()
+        .parseClaimsJws(token)
+        .getBody();
   }
 }

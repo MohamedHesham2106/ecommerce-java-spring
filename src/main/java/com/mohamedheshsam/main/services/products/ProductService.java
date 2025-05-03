@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.mohamedheshsam.main.dtos.ImageDto;
 import com.mohamedheshsam.main.dtos.ProductDto;
 import com.mohamedheshsam.main.exceptions.ProductNotFoundException;
 import com.mohamedheshsam.main.exceptions.ResourceNotFoundException;
@@ -16,38 +17,35 @@ import com.mohamedheshsam.main.requests.ProductUpdateRequest;
 import com.mohamedheshsam.main.respository.CategoryRepository;
 import com.mohamedheshsam.main.respository.ImageRepository;
 import com.mohamedheshsam.main.respository.ProductRepository;
-import org.modelmapper.ModelMapper;
 import lombok.RequiredArgsConstructor;
-import com.mohamedheshsam.main.exceptions.ImageConversionException;
 
 @Service
 @RequiredArgsConstructor
 public class ProductService implements IProductService {
   private final ProductRepository productRepository;
   private final CategoryRepository categoryRepository;
-  private final ModelMapper modelMapper;
   private final ImageRepository imageRepository;
 
   @Override
   public Product addProduct(AddProductRequestDto request) {
-    // check if the category is found in the DB
-    // If Yes, set it as the new product category
-    // If No, the save it as a new category
-    // The set as the new product category.
+    if (request.getCategory() == null || request.getCategory().getName() == null) {
+      throw new IllegalArgumentException("Category name cannot be null");
+    }
 
-    Category category = Optional.ofNullable(categoryRepository.findByName(request.getCategory().getName()))
+    Category category = Optional.ofNullable(
+        categoryRepository.findByNameIgnoreCase(request.getCategory().getName()))
         .orElseGet(() -> {
-          Category newCategory = new Category(request.getCategory().getName());
-          return categoryRepository.save(newCategory);
+          Category newCat = new Category(request.getCategory().getName());
+          return categoryRepository.save(newCat);
         });
-    request.setCategory(category);
+    request.getCategory().setName(category.getName());
     return productRepository.save(createProduct(request, category));
   }
 
   @Override
-  public Product updateProduct(ProductUpdateRequest product, Long id) {
+  public Product updateProduct(ProductUpdateRequest request, Long id) {
     return productRepository.findById(id)
-        .map(existingProduct -> updateExistingProduct(existingProduct, product))
+        .map(existing -> updateExistingProduct(existing, request))
         .map(productRepository::save)
         .orElseThrow(() -> new ProductNotFoundException("Product not found"));
   }
@@ -60,11 +58,12 @@ public class ProductService implements IProductService {
 
   @Override
   public void deleteProductById(Long id) {
-    productRepository.findById(id).ifPresentOrElse(productRepository::delete,
-        () -> {
-          throw new ProductNotFoundException("Product not found");
-        });
-
+    productRepository.findById(id)
+        .ifPresentOrElse(
+            productRepository::delete,
+            () -> {
+              throw new ProductNotFoundException("Product not found");
+            });
   }
 
   @Override
@@ -73,58 +72,22 @@ public class ProductService implements IProductService {
   }
 
   @Override
-  public List<Product> getProductsByCategory(String category) {
-    return productRepository.findByCategoryName(category);
-  }
-
-  @Override
-  public List<Product> getProductsByBrand(String brand) {
-    return productRepository.findByBrand(brand);
-  }
-
-  @Override
-  public List<Product> getProductsByCategoryAndBrand(String category, String brand) {
-    return productRepository.findByCategoryNameAndBrand(category, brand);
-  }
-
-  @Override
-  public List<Product> getProductsByName(String name) {
-    return productRepository.findByName(name);
-  }
-
-  @Override
-  public List<Product> getProductsByBrandAndName(String brand, String name) {
-    return productRepository.findByBrandAndName(brand, name);
-  }
-
-  @Override
-  public Long countProductsByBrandAndName(String brand, String name) {
-    return productRepository.countByBrandAndName(brand, name);
-  }
-
-  // Helpers
-
-  private Product updateExistingProduct(Product existingProduct, ProductUpdateRequest request) {
-    existingProduct.setName(request.getName());
-    existingProduct.setBrand(request.getBrand());
-    existingProduct.setPrice(request.getPrice());
-    existingProduct.setInventory(request.getInventory());
-    existingProduct.setDescription(request.getDescription());
-
-    Category category = categoryRepository.findByName(request.getCategory().getName());
-    existingProduct.setCategory(category);
-    return existingProduct;
-
-  }
-
-  private Product createProduct(AddProductRequestDto request, Category category) {
-    return new Product(
-        request.getName(),
-        request.getBrand(),
-        request.getPrice(),
-        request.getInventory(),
-        request.getDescription(),
-        category);
+  public List<Product> getFilteredProducts(String category, String brand, String name) {
+    if (category != null && brand != null && name != null) {
+      return productRepository.findByCategoryNameIgnoreCaseAndBrandIgnoreCaseAndNameIgnoreCase(category, brand, name);
+    } else if (category != null && brand != null) {
+      return productRepository.findByCategoryNameIgnoreCaseAndBrandIgnoreCase(category, brand);
+    } else if (brand != null && name != null) {
+      return productRepository.findByBrandIgnoreCaseAndNameIgnoreCase(brand, name);
+    } else if (category != null) {
+      return productRepository.findByCategoryNameIgnoreCase(category);
+    } else if (brand != null) {
+      return productRepository.findByBrandIgnoreCase(brand);
+    } else if (name != null) {
+      return productRepository.findByNameIgnoreCase(name);
+    } else {
+      return productRepository.findAll();
+    }
   }
 
   @Override
@@ -134,24 +97,50 @@ public class ProductService implements IProductService {
 
   @Override
   public ProductDto convertToDto(Product product) {
-    ProductDto productDto = modelMapper.map(product, ProductDto.class);
+    ProductDto dto = new ProductDto();
+    dto.setId(product.getId());
+    dto.setName(product.getName());
+    dto.setBrand(product.getBrand());
+    dto.setPrice(product.getPrice());
+    dto.setInventory(product.getInventory());
+    dto.setDescription(product.getDescription());
+    dto.setCategory(product.getCategory());
+
     List<Image> images = imageRepository.findByProductId(product.getId());
-    List<String> base64Images = images.stream()
-        .map(image -> {
-          try {
-            byte[] imageBytes = image.getImage().getBytes(1, (int) image.getImage().length());
-            return java.util.Base64.getEncoder().encodeToString(imageBytes);
-          } catch (Exception e) {
-            throw new ImageConversionException("Failed to convert image to Base64", e);
-          }
-        })
-        .toList();
-    productDto.setBase64Images(base64Images);
-    return productDto;
+    List<ImageDto> imageDtos = images.stream().map(img -> {
+      ImageDto idto = new ImageDto();
+      idto.setId(img.getId());
+      idto.setFileName(img.getFileName());
+      idto.setImageUrl(img.getImageUrl());
+      return idto;
+    }).toList();
+    dto.setImages(imageDtos);
+
+    return dto;
   }
 
-  @Override
-  public void saveProduct(Product product) {
-    productRepository.save(product);
+  // --- Helpers ---
+
+  private Product createProduct(AddProductRequestDto req, Category category) {
+    return new Product(
+        req.getName(),
+        req.getBrand(),
+        req.getPrice(),
+        req.getInventory(),
+        req.getDescription(),
+        category);
+  }
+
+  private Product updateExistingProduct(Product existing, ProductUpdateRequest req) {
+    existing.setName(req.getName());
+    existing.setBrand(req.getBrand());
+    existing.setPrice(req.getPrice());
+    existing.setInventory(req.getInventory());
+    existing.setDescription(req.getDescription());
+    Category cat = Optional.ofNullable(
+        categoryRepository.findByNameIgnoreCase(req.getCategory().getName()))
+        .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+    existing.setCategory(cat);
+    return existing;
   }
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.mohamedheshsam.main.dtos.CartDto;
 import com.mohamedheshsam.main.dtos.CartItemDto;
+import com.mohamedheshsam.main.dtos.ImageDto;
 import com.mohamedheshsam.main.exceptions.ResourceNotFoundException;
 import com.mohamedheshsam.main.models.Cart;
 import com.mohamedheshsam.main.models.CartItem;
@@ -94,17 +95,13 @@ public class CartItemService implements ICartItemService {
   public CartItemDto convertToDto(CartItem cartItem) {
     CartItemDto cartItemDto = modelMapper.map(cartItem, CartItemDto.class);
     List<Image> images = imageRepository.findByProductId(cartItem.getProduct().getId());
-    List<String> base64Images = images.stream()
-        .map(image -> {
-          try {
-            byte[] imageBytes = image.getImage().getBytes(1, (int) image.getImage().length());
-            return java.util.Base64.getEncoder().encodeToString(imageBytes);
-          } catch (Exception e) {
-            throw new ImageConversionException("Failed to convert image to Base64", e);
-          }
-        })
-        .toList();
-    cartItemDto.setBase64Images(base64Images);
+    cartItemDto.setImageUrls(images.stream().map(image -> {
+      ImageDto imageDto = new ImageDto();
+      imageDto.setId(image.getId());
+      imageDto.setFileName(image.getFileName());
+      imageDto.setImageUrl(image.getImageUrl());
+      return imageDto;
+    }).toList());
     return cartItemDto;
   }
 }

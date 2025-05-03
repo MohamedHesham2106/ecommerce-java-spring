@@ -1,10 +1,14 @@
 package com.mohamedheshsam.main.requests;
 
 import java.math.BigDecimal;
+import java.util.List;
 
-import com.mohamedheshsam.main.models.Category;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.mohamedheshsam.main.dtos.CategoryDto;
 
 import lombok.Data;
+import jakarta.validation.constraints.NotNull;
 
 @Data
 public class AddProductRequestDto {
@@ -14,5 +18,9 @@ public class AddProductRequestDto {
   private BigDecimal price;
   private int inventory;
   private String description;
-  private Category category;
+
+  @NotNull(message = "Category cannot be null")
+  private CategoryDto category;
+
+  private List<MultipartFile> images;
 }

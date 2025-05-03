@@ -25,7 +25,7 @@ public class CategoryService implements ICategoryService {
 
   @Override
   public Category getCategoryByName(String name) {
-    return categoryRepository.findByName(name);
+    return categoryRepository.findByNameIgnoreCase(name);
   }
 
   @Override
@@ -35,7 +35,7 @@ public class CategoryService implements ICategoryService {
 
   @Override
   public Category addCategory(Category category) {
-    return Optional.of(category).filter(c -> !categoryRepository.existsByName(c.getName()))
+    return Optional.of(category).filter(c -> !categoryRepository.existsByNameIgnoreCase(c.getName()))
         .map(categoryRepository::save)
         .orElseThrow(() -> new AlreadyExistException(category.getName() + " already exists"));
   }
