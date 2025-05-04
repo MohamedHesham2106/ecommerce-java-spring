@@ -38,7 +38,7 @@ public interface IProductService {
    * Retrieve products filtered optionally by category, brand, and/or name.
    * Passing null for any parameter means "no filter" on that field.
    */
-  List<Product> getFilteredProducts(String category, String brand, String name);
+  List<Product> getFilteredProducts(String category, String brand, String name, Boolean isFeatured);
 
   /**
    * Convert a list of Product entities to their DTO representations.

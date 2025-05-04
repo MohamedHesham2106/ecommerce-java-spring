@@ -51,4 +51,12 @@ public class Product {
     this.isFeatured = isFeatured;
 
   }
+
+  public boolean isFeatured() {
+    return isFeatured;
+  }
+
+  public void setFeatured(boolean isFeatured) {
+    this.isFeatured = isFeatured;
+  }
 }

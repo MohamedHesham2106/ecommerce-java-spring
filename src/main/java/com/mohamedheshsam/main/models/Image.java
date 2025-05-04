@@ -27,6 +27,7 @@ public class Image {
   private String fileName;
   private String fileType;
   private String imageUrl;
+  private String publicId;
 
   @ManyToOne
   @JoinColumn(name = "product_id", nullable = false)

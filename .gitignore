@@ -33,3 +33,6 @@ build/
 .vscode/
 
 credentials.json
+
+#env
+.env

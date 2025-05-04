@@ -72,22 +72,15 @@ public class ProductService implements IProductService {
   }
 
   @Override
-  public List<Product> getFilteredProducts(String category, String brand, String name) {
-    if (category != null && brand != null && name != null) {
-      return productRepository.findByCategoryNameIgnoreCaseAndBrandIgnoreCaseAndNameIgnoreCase(category, brand, name);
-    } else if (category != null && brand != null) {
-      return productRepository.findByCategoryNameIgnoreCaseAndBrandIgnoreCase(category, brand);
-    } else if (brand != null && name != null) {
-      return productRepository.findByBrandIgnoreCaseAndNameIgnoreCase(brand, name);
-    } else if (category != null) {
-      return productRepository.findByCategoryNameIgnoreCase(category);
-    } else if (brand != null) {
-      return productRepository.findByBrandIgnoreCase(brand);
-    } else if (name != null) {
-      return productRepository.findByNameIgnoreCase(name);
-    } else {
-      return productRepository.findAll();
+  public List<Product> getFilteredProducts(String category, String brand, String name, Boolean isFeatured) {
+    List<Product> filtered = internalGetFilteredProducts(category, brand, name);
+
+    if (Boolean.TRUE.equals(isFeatured)) {
+      filtered = filtered.stream()
+          .filter(p -> Boolean.TRUE.equals(p.getIsFeatured()))
+          .toList();
     }
+    return filtered;
   }
 
   @Override
@@ -105,6 +98,7 @@ public class ProductService implements IProductService {
     dto.setInventory(product.getInventory());
     dto.setDescription(product.getDescription());
     dto.setCategory(product.getCategory());
+    dto.setIsFeatured(product.getIsFeatured() != null && product.getIsFeatured());
 
     List<Image> images = imageRepository.findByProductId(product.getId());
     List<ImageDto> imageDtos = images.stream().map(img -> {
@@ -120,6 +114,16 @@ public class ProductService implements IProductService {
   }
 
   // --- Helpers ---
+  private List<Product> internalGetFilteredProducts(String category, String brand, String name) {
+    if (category == null && brand == null && name == null) {
+      return productRepository.findAll();
+    }
+    return productRepository.findAll().stream()
+        .filter(product -> category == null || product.getCategory().getName().equalsIgnoreCase(category))
+        .filter(product -> brand == null || product.getBrand().equalsIgnoreCase(brand))
+        .filter(product -> name == null || product.getName().equalsIgnoreCase(name))
+        .toList();
+  }
 
   private Product createProduct(AddProductRequestDto req, Category category) {
     return new Product(
@@ -131,16 +135,18 @@ public class ProductService implements IProductService {
         category, req.getIsFeatured() != null && req.getIsFeatured());
   }
 
-  private Product updateExistingProduct(Product existing, ProductUpdateRequest req) {
-    existing.setName(req.getName());
-    existing.setBrand(req.getBrand());
-    existing.setPrice(req.getPrice());
-    existing.setInventory(req.getInventory());
-    existing.setDescription(req.getDescription());
-    Category cat = Optional.ofNullable(
-        categoryRepository.findByNameIgnoreCase(req.getCategory().getName()))
-        .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
-    existing.setCategory(cat);
+  private Product updateExistingProduct(Product existing, ProductUpdateRequest request) {
+    Optional.ofNullable(request.getName()).ifPresent(existing::setName);
+    Optional.ofNullable(request.getDescription()).ifPresent(existing::setDescription);
+    Optional.ofNullable(request.getPrice()).ifPresent(existing::setPrice);
+    Optional.ofNullable(request.getIsFeatured()).ifPresent(existing::setIsFeatured);
+
+    if (request.getCategory() != null) {
+      Category category = categoryRepository.findById(request.getCategory().getId())
+          .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+      existing.setCategory(category);
+    }
+
     return existing;
   }
 }

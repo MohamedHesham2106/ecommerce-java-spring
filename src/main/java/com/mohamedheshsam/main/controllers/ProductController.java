@@ -1,5 +1,6 @@
 package com.mohamedheshsam.main.controllers;
 
+import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -31,16 +32,42 @@ public class ProductController {
   public ResponseEntity<ApiResponse> getAllProducts(
       @RequestParam(required = false) String category,
       @RequestParam(required = false) String brand,
-      @RequestParam(required = false) String name) {
+      @RequestParam(required = false) String name,
+      @RequestParam(required = false) Boolean isFeatured,
+      @RequestParam(defaultValue = "1") int page,
+      @RequestParam(defaultValue = "10") int limit) {
+
     try {
-      List<Product> products = productService.getFilteredProducts(category, brand, name);
-      if (products.isEmpty()) {
+      List<Product> filteredProducts = productService.getFilteredProducts(category, brand, name, isFeatured);
+
+      int total = filteredProducts.size();
+      int pages = (int) Math.ceil((double) total / limit);
+      int offset = (page - 1) * limit;
+
+      if (offset >= total) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(new ApiResponse("No products found", null));
+            .body(new ApiResponse("No products found for this page", null));
       }
-      List<ProductDto> convertedProducts = productService.getConvertedProducts(products);
-      return ResponseEntity.ok(new ApiResponse("success", convertedProducts));
+
+      List<Product> pagedProducts = filteredProducts.stream()
+          .skip(offset)
+          .limit(limit)
+          .toList();
+
+      List<ProductDto> productDtos = productService.getConvertedProducts(pagedProducts);
+
+      var response = new java.util.HashMap<String, Object>();
+      response.put("products", productDtos);
+      response.put("meta", java.util.Map.of(
+          "page", page,
+          "pages", pages,
+          "limit", limit,
+          "offset", offset,
+          "total", total));
+
+      return ResponseEntity.ok(new ApiResponse("success", response));
     } catch (Exception e) {
+      e.printStackTrace();
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(new ApiResponse("Failed to retrieve products", null));
     }
@@ -83,8 +110,8 @@ public class ProductController {
   @PutMapping(path = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ApiResponse> updateProduct(
       @PathVariable Long id,
-      @ModelAttribute ProductUpdateRequest updateRequest,
-      @RequestParam(value = "images", required = false) List<MultipartFile> images) {
+      @RequestPart("product") ProductUpdateRequest updateRequest,
+      @RequestPart(value = "images", required = false) List<MultipartFile> images) {
     try {
       Product updatedProduct = productService.updateProduct(updateRequest, id);
 
@@ -92,11 +119,13 @@ public class ProductController {
         imageService.updateImages(images, id);
       }
 
-      return ResponseEntity.ok(new ApiResponse("Product and images updated successfully", updatedProduct));
+      ProductDto updatedDto = productService.convertToDto(updatedProduct);
+      return ResponseEntity.ok(new ApiResponse("Product and images updated successfully", updatedDto));
     } catch (ProductNotFoundException e) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
           .body(new ApiResponse(e.getMessage(), null));
     } catch (Exception e) {
+      e.printStackTrace();
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(new ApiResponse("Failed to update product", null));
     }
