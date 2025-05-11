@@ -9,6 +9,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.MediaType;
+
+import com.mohamedheshsam.main.dtos.BrandCountDto;
 import com.mohamedheshsam.main.dtos.ProductDto;
 import com.mohamedheshsam.main.exceptions.ProductNotFoundException;
 import com.mohamedheshsam.main.exceptions.ResourceNotFoundException;
@@ -144,5 +146,20 @@ public class ProductController {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(new ApiResponse("Failed to delete product", null));
     }
+  }
+
+  @GetMapping("/brands")
+  public List<BrandCountDto> getBrandCounts() {
+    return productService.getAllBrands();
+  }
+
+  @GetMapping("/count")
+  public ResponseEntity<ApiResponse> getProductsCount() {
+    HashMap<String, Long> response = new HashMap<>();
+    long count = productService.countAllProducts();
+    response.put("count", count);
+
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(new ApiResponse("success", response));
   }
 }

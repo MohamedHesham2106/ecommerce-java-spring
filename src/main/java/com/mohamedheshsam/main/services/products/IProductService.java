@@ -2,6 +2,7 @@ package com.mohamedheshsam.main.services.products;
 
 import java.util.List;
 
+import com.mohamedheshsam.main.dtos.BrandCountDto;
 import com.mohamedheshsam.main.dtos.ProductDto;
 import com.mohamedheshsam.main.models.Product;
 import com.mohamedheshsam.main.requests.AddProductRequestDto;
@@ -49,5 +50,15 @@ public interface IProductService {
    * Convert a single Product entity to its DTO representation.
    */
   ProductDto convertToDto(Product product);
+
+  /**
+   * Get All Brands and Number of Products for each Brand
+   */
+  List<BrandCountDto> getAllBrands();
+
+  /**
+   * Get Products Count
+   */
+  long countAllProducts();
 
 }

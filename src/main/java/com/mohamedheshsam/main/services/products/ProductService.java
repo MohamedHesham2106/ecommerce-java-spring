@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.mohamedheshsam.main.dtos.BrandCountDto;
 import com.mohamedheshsam.main.dtos.ImageDto;
 import com.mohamedheshsam.main.dtos.ProductDto;
 import com.mohamedheshsam.main.exceptions.ProductNotFoundException;
@@ -148,5 +149,15 @@ public class ProductService implements IProductService {
     }
 
     return existing;
+  }
+
+  @Override
+  public List<BrandCountDto> getAllBrands() {
+    return productRepository.findBrandCounts();
+  }
+
+  @Override
+  public long countAllProducts() {
+    return productRepository.count();
   }
 }

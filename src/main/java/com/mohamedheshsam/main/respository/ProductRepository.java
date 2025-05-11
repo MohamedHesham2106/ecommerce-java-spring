@@ -3,7 +3,9 @@ package com.mohamedheshsam.main.respository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
+import com.mohamedheshsam.main.dtos.BrandCountDto;
 import com.mohamedheshsam.main.models.Product;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -25,4 +27,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
       String name);
 
   long countByBrandIgnoreCaseAndNameIgnoreCase(String brand, String name);
+
+  @Query("SELECT new com.mohamedheshsam.main.dtos.BrandCountDto(p.brand, COUNT(p)) "
+      + "FROM Product p "
+      + "GROUP BY p.brand "
+      + "ORDER BY COUNT(p) DESC")
+  List<BrandCountDto> findBrandCounts();
+
 }
