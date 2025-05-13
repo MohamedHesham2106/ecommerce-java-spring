@@ -1,7 +1,6 @@
 package com.mohamedheshsam.main.dtos;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 import lombok.Data;
 
@@ -12,7 +11,6 @@ public class CartItemDto {
   private BigDecimal unitPrice;
   private BigDecimal totalPrice;
   private ProductDto product;
-  private List<ImageDto> imageUrls;
 
   // Getters and setters
   public Long getId() {
@@ -53,13 +51,5 @@ public class CartItemDto {
 
   public void setProduct(ProductDto product) {
     this.product = product;
-  }
-
-  public List<ImageDto> getImageUrls() {
-    return imageUrls;
-  }
-
-  public void setImageUrls(List<ImageDto> imageUrls) {
-    this.imageUrls = imageUrls;
   }
 }

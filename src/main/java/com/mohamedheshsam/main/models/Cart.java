@@ -39,6 +39,11 @@ public class Cart {
   @JsonIgnore
   private User user;
 
+  public Cart(User user, BigDecimal totalAmount) {
+    this.user = user;
+    this.totalAmount = totalAmount;
+  }
+
   public void addItem(CartItem item) {
     this.items.add(item);
     item.setCart(this);

@@ -42,6 +42,14 @@ public class CartItem {
   @JsonIgnore
   private Cart cart;
 
+  public CartItem(Cart cart, Product product, int quantity, BigDecimal unitPrice, BigDecimal totalPrice) {
+    this.cart = cart;
+    this.product = product;
+    this.quantity = quantity;
+    this.unitPrice = unitPrice;
+    this.totalPrice = totalPrice;
+  }
+
   public Product getProduct() {
     return product;
   }

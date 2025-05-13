@@ -8,4 +8,13 @@ public class ImageDto {
   private String fileName;
   private String imageUrl;
   private String publicId;
+
+  public ImageDto() {
+  }
+
+  public ImageDto(Long id, String fileName, String imageUrl) {
+    this.id = id;
+    this.fileName = fileName;
+    this.imageUrl = imageUrl;
+  }
 }

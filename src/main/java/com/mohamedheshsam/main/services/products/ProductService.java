@@ -3,6 +3,7 @@ package com.mohamedheshsam.main.services.products;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.mohamedheshsam.main.dtos.BrandCountDto;
@@ -18,6 +19,8 @@ import com.mohamedheshsam.main.requests.ProductUpdateRequest;
 import com.mohamedheshsam.main.respository.CategoryRepository;
 import com.mohamedheshsam.main.respository.ImageRepository;
 import com.mohamedheshsam.main.respository.ProductRepository;
+import com.mohamedheshsam.main.utils.ProductSpecification;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -74,14 +77,12 @@ public class ProductService implements IProductService {
 
   @Override
   public List<Product> getFilteredProducts(String category, String brand, String name, Boolean isFeatured) {
-    List<Product> filtered = internalGetFilteredProducts(category, brand, name);
+    Specification<Product> spec = Specification.where(ProductSpecification.hasCategoryLike(category))
+        .and(ProductSpecification.hasBrandLike(brand))
+        .and(ProductSpecification.hasNameLike(name))
+        .and(ProductSpecification.isFeatured(isFeatured));
 
-    if (Boolean.TRUE.equals(isFeatured)) {
-      filtered = filtered.stream()
-          .filter(p -> Boolean.TRUE.equals(p.getIsFeatured()))
-          .toList();
-    }
-    return filtered;
+    return productRepository.findAll(spec);
   }
 
   @Override
@@ -115,16 +116,6 @@ public class ProductService implements IProductService {
   }
 
   // --- Helpers ---
-  private List<Product> internalGetFilteredProducts(String category, String brand, String name) {
-    if (category == null && brand == null && name == null) {
-      return productRepository.findAll();
-    }
-    return productRepository.findAll().stream()
-        .filter(product -> category == null || product.getCategory().getName().equalsIgnoreCase(category))
-        .filter(product -> brand == null || product.getBrand().equalsIgnoreCase(brand))
-        .filter(product -> name == null || product.getName().equalsIgnoreCase(name))
-        .toList();
-  }
 
   private Product createProduct(AddProductRequestDto req, Category category) {
     return new Product(

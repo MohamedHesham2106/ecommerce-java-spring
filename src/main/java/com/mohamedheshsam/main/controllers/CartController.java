@@ -1,18 +1,16 @@
 package com.mohamedheshsam.main.controllers;
 
 import java.math.BigDecimal;
-import java.net.URI;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.mohamedheshsam.main.dtos.CartDto;
 import com.mohamedheshsam.main.exceptions.ResourceNotFoundException;
-import com.mohamedheshsam.main.models.Cart;
 import com.mohamedheshsam.main.responses.ApiResponse;
 import com.mohamedheshsam.main.services.cart.ICartService;
+import com.mohamedheshsam.main.services.user.IUserService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,37 +19,51 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("${api.prefix}/carts")
 public class CartController {
   private final ICartService cartService;
+  private final IUserService userService;
 
-  @GetMapping("/users/{userId}")
-  public ResponseEntity<ApiResponse> getUserCart(@PathVariable Long userId) {
+  /**
+   * Retrieve a user's cart (single active cart per user).
+   * GET /carts/users/{userId}
+   */
+  @GetMapping()
+  public ResponseEntity<ApiResponse> getUserCart() {
     try {
-      Cart cart = cartService.getCartByUserId(userId);
-      CartDto cartDto = cartService.convertToDto(cart);
-      return ResponseEntity.ok(new ApiResponse("Success", cartDto));
-    } catch (ResourceNotFoundException e) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(e.getMessage(), null));
+      Long userId = userService.getAuthenticatedUser().getId();
+      CartDto dto = cartService.convertToDto(cartService.getCartByUserId(userId));
+      return ResponseEntity.ok(new ApiResponse("Cart retrieved successfully.", dto));
+    } catch (ResourceNotFoundException ex) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(new ApiResponse(ex.getMessage(), null));
     }
   }
 
+  /**
+   * Clear all items from an existing cart.
+   * DELETE /carts/{cartId}
+   */
   @DeleteMapping("/{cartId}")
   public ResponseEntity<ApiResponse> clearCart(@PathVariable Long cartId) {
     try {
       cartService.clearCart(cartId);
-      return ResponseEntity.ok(new ApiResponse("Clear Cart Success!", null));
-    } catch (ResourceNotFoundException e) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(e.getMessage(), null));
+      return ResponseEntity.ok(new ApiResponse("Cart cleared successfully.", null));
+    } catch (ResourceNotFoundException ex) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(new ApiResponse(ex.getMessage(), null));
     }
   }
 
+  /**
+   * Calculate total price of all items in a cart.
+   * GET /carts/{cartId}/total
+   */
   @GetMapping("/{cartId}/total")
   public ResponseEntity<ApiResponse> getTotal(@PathVariable Long cartId) {
     try {
       BigDecimal total = cartService.getTotalPrice(cartId);
       return ResponseEntity.ok(new ApiResponse("Total price calculated successfully.", total));
     } catch (ResourceNotFoundException ex) {
-      return ResponseEntity.status(404)
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
           .body(new ApiResponse(ex.getMessage(), null));
     }
   }
-
 }
