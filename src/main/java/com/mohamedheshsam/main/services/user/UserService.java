@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import lombok.RequiredArgsConstructor;
 import com.mohamedheshsam.main.dtos.OrderDto;
 import com.mohamedheshsam.main.dtos.CartDto;
+import com.mohamedheshsam.main.dtos.ImageDto;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +45,7 @@ public class UserService implements IUserService {
           user.setPassword(passwordEncoder.encode(request.getPassword()));
           user.setFirstName(request.getFirstName());
           user.setLastName(request.getLastName());
-          user.setRole(RoleType.USER); 
+          user.setRole(RoleType.USER);
           return userRepository.save(user);
         }).orElseThrow(() -> new AlreadyExistException("The email " + request.getEmail() + " is already registered!"));
   }
@@ -86,6 +87,12 @@ public class UserService implements IUserService {
       userDto.setCart(null);
     }
     userDto.setRole(user.getRole());
+    if (user.getImage() != null) {
+      ImageDto imageDto = modelMapper.map(user.getImage(), ImageDto.class);
+      userDto.setImage(imageDto);
+    } else {
+      userDto.setImage(null);
+    }
     return userDto;
   }
 

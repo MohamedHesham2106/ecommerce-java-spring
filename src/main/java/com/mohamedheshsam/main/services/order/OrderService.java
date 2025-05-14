@@ -91,4 +91,31 @@ public class OrderService implements IOrderService {
   public OrderDto convertToDto(Order order) {
     return modelMapper.map(order, OrderDto.class);
   }
+
+  @Override
+  public Boolean cancelOrder(Long orderId) {
+    Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+    if (order.getOrderItems() != null) {
+      order.getOrderItems().forEach(orderItem -> {
+        Product product = orderItem.getProduct();
+        if (product != null) {
+          product.setInventory(product.getInventory() + orderItem.getQuantity());
+          productRepository.save(product);
+        }
+      });
+    }
+    order.setStatus(OrderStatus.CANCELLED);
+    orderRepository.save(order);
+    return true;
+  }
+
+  @Override
+  public Boolean updateOrderStatus(Long orderId, String status) {
+    Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+    order.setStatus(OrderStatus.valueOf(status));
+    orderRepository.save(order);
+    return true;
+  }
 }

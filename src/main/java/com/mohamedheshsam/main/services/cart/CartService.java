@@ -55,12 +55,6 @@ public class CartService implements ICartService {
   }
 
   @Override
-  public BigDecimal getTotalPrice(Long id) {
-    Cart cart = getCart(id);
-    return cart.getTotalAmount();
-  }
-
-  @Override
   public Cart getCartByUserId(Long userId) {
     return Optional.ofNullable(cartRepository.findByUserId(userId))
         .orElseThrow(() -> new ResourceNotFoundException("Cart not found for user."));
@@ -92,5 +86,11 @@ public class CartService implements ICartService {
         .map(CartItemDto::getTotalPrice)
         .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add));
     return dto;
+  }
+
+  @Override
+  public BigDecimal getItemsCount(Long id) {
+    Cart cart = getCart(id);
+    return BigDecimal.valueOf(cart.getItems().size());
   }
 }

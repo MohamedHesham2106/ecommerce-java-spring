@@ -1,6 +1,7 @@
 package com.mohamedheshsam.main.controllers;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,9 +42,11 @@ public class CartController {
    * Clear all items from an existing cart.
    * DELETE /carts/{cartId}
    */
-  @DeleteMapping("/{cartId}")
-  public ResponseEntity<ApiResponse> clearCart(@PathVariable Long cartId) {
+  @DeleteMapping
+  public ResponseEntity<ApiResponse> clearCart() {
     try {
+      Long userId = userService.getAuthenticatedUser().getId();
+      Long cartId = cartService.getCartByUserId(userId).getId();
       cartService.clearCart(cartId);
       return ResponseEntity.ok(new ApiResponse("Cart cleared successfully.", null));
     } catch (ResourceNotFoundException ex) {
@@ -53,14 +56,18 @@ public class CartController {
   }
 
   /**
-   * Calculate total price of all items in a cart.
-   * GET /carts/{cartId}/total
+   * Get the number of items in a cart.
+   * GET /carts/{cartId}/items/count
    */
-  @GetMapping("/{cartId}/total")
-  public ResponseEntity<ApiResponse> getTotal(@PathVariable Long cartId) {
+  @GetMapping("/count")
+  public ResponseEntity<ApiResponse> getItemsCount() {
     try {
-      BigDecimal total = cartService.getTotalPrice(cartId);
-      return ResponseEntity.ok(new ApiResponse("Total price calculated successfully.", total));
+      Long userId = userService.getAuthenticatedUser().getId();
+      Long cartId = cartService.getCartByUserId(userId).getId();
+      BigDecimal count = cartService.getItemsCount(cartId);
+      HashMap<String, BigDecimal> response = new HashMap<>();
+      response.put("count", count);
+      return ResponseEntity.ok(new ApiResponse("Items count retrieved successfully.", response));
     } catch (ResourceNotFoundException ex) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
           .body(new ApiResponse(ex.getMessage(), null));

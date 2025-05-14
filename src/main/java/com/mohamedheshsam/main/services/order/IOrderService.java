@@ -8,6 +8,10 @@ import com.mohamedheshsam.main.dtos.OrderDto;
 public interface IOrderService {
   Order placeOrder(Long userId);
 
+  Boolean cancelOrder(Long orderId);
+
+  Boolean updateOrderStatus(Long orderId, String status);
+
   OrderDto getOrderById(Long orderId);
 
   List<OrderDto> getUserOrders(Long userId);

@@ -6,7 +6,9 @@ import com.mohamedheshsam.main.dtos.ImageDto;
 import com.mohamedheshsam.main.exceptions.ResourceNotFoundException;
 import com.mohamedheshsam.main.models.Image;
 import com.mohamedheshsam.main.models.Product;
+import com.mohamedheshsam.main.models.User;
 import com.mohamedheshsam.main.respository.ImageRepository;
+import com.mohamedheshsam.main.respository.UserRepository;
 import com.mohamedheshsam.main.services.products.IProductService;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -27,6 +29,7 @@ public class ImageService implements IImageService {
 
   private final ImageRepository imageRepository;
   private final IProductService productService;
+  private final UserRepository userRepository;
   private Cloudinary cloudinary;
 
   @PostConstruct
@@ -86,6 +89,30 @@ public class ImageService implements IImageService {
       throw new RuntimeException("Cloudinary delete failed: " + e.getMessage(), e);
     }
     imageRepository.delete(img);
+  }
+
+  @Override
+  public Image saveUserImage(MultipartFile file, Long userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found for image upload: " + userId));
+    try {
+      Map<?, ?> uploadResult = cloudinary.uploader().upload(
+          file.getBytes(),
+          ObjectUtils.asMap(
+              "resource_type", "auto",
+              "folder", "user_images"));
+      String url = uploadResult.get("secure_url").toString();
+      String publicId = uploadResult.get("public_id").toString();
+      Image image = new Image();
+      image.setFileName(file.getOriginalFilename());
+      image.setFileType(file.getContentType());
+      image.setImageUrl(url);
+      image.setPublicId(publicId);
+      image.setUser(user);
+      return imageRepository.save(image);
+    } catch (IOException e) {
+      throw new RuntimeException("Cloudinary upload failed: " + e.getMessage(), e);
+    }
   }
 
   private Image uploadAndBuildImage(MultipartFile file, Product product) {
