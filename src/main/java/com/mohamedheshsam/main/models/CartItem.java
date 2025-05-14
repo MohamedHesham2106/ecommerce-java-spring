@@ -17,6 +17,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Getter
 @Setter
@@ -36,9 +38,10 @@ public class CartItem {
 
   @ManyToOne
   @JoinColumn(name = "product_id")
+  @OnDelete(action = OnDeleteAction.CASCADE)
   private Product product;
 
-  @ManyToOne(cascade = CascadeType.ALL)
+  @ManyToOne
   @JsonIgnore
   private Cart cart;
 

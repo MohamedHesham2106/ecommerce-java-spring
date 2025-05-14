@@ -32,7 +32,7 @@ public class Product {
   private String description;
   private Boolean isFeatured = false;
 
-  @ManyToOne(cascade = CascadeType.ALL)
+  @ManyToOne
   @JoinColumn(name = "category_id")
   private Category category;
 

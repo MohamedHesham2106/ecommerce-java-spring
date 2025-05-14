@@ -15,6 +15,7 @@ import com.mohamedheshsam.main.models.Cart;
 import com.mohamedheshsam.main.models.Order;
 import com.mohamedheshsam.main.models.OrderItem;
 import com.mohamedheshsam.main.models.Product;
+import com.mohamedheshsam.main.respository.CartRepository;
 import com.mohamedheshsam.main.respository.OrderRepository;
 import com.mohamedheshsam.main.respository.ProductRepository;
 import com.mohamedheshsam.main.services.cart.CartService;
@@ -28,6 +29,7 @@ public class OrderService implements IOrderService {
   private final OrderRepository orderRepository;
   private final ProductRepository productRepository;
   private final CartService cartService;
+  private final CartRepository cartRepository;
   private final ModelMapper modelMapper;
 
   @Transactional

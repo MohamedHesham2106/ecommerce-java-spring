@@ -26,7 +26,6 @@ public class CartItemService implements ICartItemService {
   private final CartItemRepository cartItemRepository;
   private final IProductService productService;
   private final ICartService cartService;
-  private final ImageRepository imageRepository;
   private final ModelMapper modelMapper;
 
   @Override
@@ -46,12 +45,17 @@ public class CartItemService implements ICartItemService {
 
   @Override
   public void removeItemFromCart(Long cartId, Long productId) {
-    CartItem item = cartService.getCart(cartId).getItems().stream()
+    Cart cart = cartService.getCart(cartId);
+    CartItem item = cart.getItems().stream()
         .filter(i -> i.getProduct().getId().equals(productId))
         .findFirst()
         .orElseThrow(() -> new ResourceNotFoundException("Item not found."));
     cartItemRepository.delete(item);
-    recalcCartTotal(item.getCart());
+    cart.getItems().remove(item);
+    recalcCartTotal(cart);
+    if (cart.getItems().isEmpty()) {
+      cartService.deleteCart(cart.getId());
+    }
   }
 
   @Override

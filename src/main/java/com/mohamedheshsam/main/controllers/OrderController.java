@@ -7,6 +7,7 @@ import com.mohamedheshsam.main.exceptions.ResourceNotFoundException;
 import com.mohamedheshsam.main.models.Order;
 import com.mohamedheshsam.main.responses.ApiResponse;
 import com.mohamedheshsam.main.services.order.IOrderService;
+import com.mohamedheshsam.main.services.user.IUserService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,10 +25,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("${api.prefix}/orders")
 public class OrderController {
   private final IOrderService orderService;
+  private final IUserService userService;
 
-  @PostMapping("/users/{userId}")
-  public ResponseEntity<ApiResponse> createOrder(@PathVariable Long userId) {
+  @PostMapping
+  public ResponseEntity<ApiResponse> createOrder() {
     try {
+      Long userId = userService.getAuthenticatedUser().getId();
       Order order = orderService.placeOrder(userId);
       OrderDto orderDto = orderService.convertToDto(order);
       return ResponseEntity.ok(new ApiResponse("Items Order Success!", orderDto));
@@ -37,23 +40,15 @@ public class OrderController {
     }
   }
 
-  @GetMapping("/{orderId}")
-  public ResponseEntity<ApiResponse> getOrderById(@PathVariable Long orderId) {
+  @GetMapping
+  public ResponseEntity<ApiResponse> getUserOrders() {
     try {
-      OrderDto order = orderService.getOrderById(orderId);
-      return ResponseEntity.ok(new ApiResponse("Item Order Success!", order));
+      Long userId = userService.getAuthenticatedUser().getId();
+      List<OrderDto> orders = orderService.getUserOrders(userId);
+      return ResponseEntity.ok(new ApiResponse("User orders retrieved successfully", orders));
     } catch (ResourceNotFoundException e) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse("Oops!", e.getMessage()));
-    }
-  }
-
-  @GetMapping("/users/{userId}")
-  public ResponseEntity<ApiResponse> getUserOrders(@PathVariable Long userId) {
-    try {
-      List<OrderDto> order = orderService.getUserOrders(userId);
-      return ResponseEntity.ok(new ApiResponse("Item Order Success!", order));
-    } catch (ResourceNotFoundException e) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse("Oops!", e.getMessage()));
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(new ApiResponse("No orders found for user", e.getMessage()));
     }
   }
 }

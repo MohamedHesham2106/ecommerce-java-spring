@@ -18,6 +18,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -37,7 +40,8 @@ public class User {
   private Cart cart;
 
   @OneToOne(cascade = CascadeType.ALL)
-  @JoinColumn(name = "image_id")
+  @JoinColumn(name = "image_id", nullable = true)
+  @OnDelete(action = OnDeleteAction.SET_NULL)
   private Image image;
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

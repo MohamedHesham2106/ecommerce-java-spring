@@ -28,9 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CartService implements ICartService {
   private final CartRepository cartRepository;
-  private final CartItemRepository cartItemRepository;
   private final IProductService productService;
-  private final ImageRepository imageRepository;
 
   @Override
   public Cart initializeNewCart(User user) {
@@ -48,9 +46,8 @@ public class CartService implements ICartService {
   @Override
   public void clearCart(Long id) {
     Cart cart = getCart(id);
-    cartItemRepository.deleteAllByCartId(id);
-    cart.setTotalAmount(BigDecimal.ZERO);
     cart.getItems().clear();
+    cart.setTotalAmount(BigDecimal.ZERO);
     cartRepository.save(cart);
   }
 
@@ -92,5 +89,10 @@ public class CartService implements ICartService {
   public BigDecimal getItemsCount(Long id) {
     Cart cart = getCart(id);
     return BigDecimal.valueOf(cart.getItems().size());
+  }
+
+  @Override
+  public void deleteCart(Long id) {
+    cartRepository.deleteById(id);
   }
 }

@@ -34,7 +34,7 @@ public class Cart {
   @JsonIgnore
   private Set<CartItem> items = new HashSet<>();
 
-  @OneToOne(cascade = CascadeType.ALL)
+  @OneToOne
   @JoinColumn(name = "user_id")
   @JsonIgnore
   private User user;
