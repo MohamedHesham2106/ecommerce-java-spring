@@ -19,6 +19,9 @@ import com.mohamedheshsam.main.respository.CartRepository;
 import com.mohamedheshsam.main.respository.OrderRepository;
 import com.mohamedheshsam.main.respository.ProductRepository;
 import com.mohamedheshsam.main.services.cart.CartService;
+import com.mohamedheshsam.main.respository.ImageRepository;
+import com.mohamedheshsam.main.dtos.OrderItemDto;
+import com.mohamedheshsam.main.dtos.ImageDto;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,8 +32,8 @@ public class OrderService implements IOrderService {
   private final OrderRepository orderRepository;
   private final ProductRepository productRepository;
   private final CartService cartService;
-  private final CartRepository cartRepository;
   private final ModelMapper modelMapper;
+  private final ImageRepository imageRepository;
 
   @Transactional
   @Override
@@ -91,7 +94,25 @@ public class OrderService implements IOrderService {
 
   @Override
   public OrderDto convertToDto(Order order) {
-    return modelMapper.map(order, OrderDto.class);
+    OrderDto orderDto = modelMapper.map(order, OrderDto.class);
+    if (orderDto.getItems() != null) {
+      for (OrderItemDto itemDto : orderDto.getItems()) {
+        if (itemDto.getId() != null) {
+          // Find the matching OrderItem in the order
+          OrderItem orderItem = order.getOrderItems().stream()
+              .filter(oi -> oi.getId().equals(itemDto.getId()))
+              .findFirst().orElse(null);
+          if (orderItem != null && orderItem.getProduct() != null) {
+            itemDto.setName(orderItem.getProduct().getName());
+            // Set images
+            var images = imageRepository.findByProductId(orderItem.getProduct().getId());
+            List<ImageDto> imageDtos = images.stream().map(img -> modelMapper.map(img, ImageDto.class)).toList();
+            itemDto.setImages(imageDtos);
+          }
+        }
+      }
+    }
+    return orderDto;
   }
 
   @Override
