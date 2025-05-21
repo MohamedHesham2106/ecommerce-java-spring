@@ -2,6 +2,7 @@ package com.mohamedheshsam.main.services.user;
 
 import java.util.Optional;
 import java.util.Collections;
+import java.util.List;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,13 @@ public class UserService implements IUserService {
   private final UserRepository userRepository;
   private final ModelMapper modelMapper;
   private final PasswordEncoder passwordEncoder;
+
+  @Override
+  public List<UserDto> getAllUsers() {
+    return userRepository.findAll().stream()
+        .map(this::convertUserToDto)
+        .toList();
+  }
 
   @Override
   public User getUserById(Long userId) {
