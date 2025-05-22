@@ -13,6 +13,7 @@ import com.mohamedheshsam.main.services.products.IProductService;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.annotation.PostConstruct;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -92,10 +93,13 @@ public class ImageService implements IImageService {
   }
 
   @Override
+  @Transactional
   public Image saveUserImage(MultipartFile file, Long userId) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new ResourceNotFoundException("User not found for image upload: " + userId));
+
     try {
+      // Upload the new image to Cloudinary first
       Map<?, ?> uploadResult = cloudinary.uploader().upload(
           file.getBytes(),
           ObjectUtils.asMap(
@@ -103,12 +107,41 @@ public class ImageService implements IImageService {
               "folder", "user_images"));
       String url = uploadResult.get("secure_url").toString();
       String publicId = uploadResult.get("public_id").toString();
-      Image image = new Image();
-      image.setFileName(file.getOriginalFilename());
-      image.setFileType(file.getContentType());
-      image.setImageUrl(url);
-      image.setPublicId(publicId);
-      image.setUser(user);
+
+      // Create new image entity or update existing one
+      Image image;
+
+      // Check if the user already has an image - handle null safely
+      if (user.getImage() != null) {
+        // Get the existing image
+        image = user.getImage();
+
+        // Delete old image from Cloudinary if it has a publicId
+        if (image.getPublicId() != null) {
+          try {
+            cloudinary.uploader().destroy(image.getPublicId(), ObjectUtils.emptyMap());
+          } catch (IOException e) {
+            // Just log the error but continue - we don't want to fail the whole operation
+            System.err.println("Failed to delete old image from Cloudinary: " + e.getMessage());
+          }
+        }
+
+        // Update the existing image with new data
+        image.setFileName(file.getOriginalFilename());
+        image.setFileType(file.getContentType());
+        image.setImageUrl(url);
+        image.setPublicId(publicId);
+      } else {
+        // Create a new image if user doesn't have one
+        image = new Image();
+        image.setFileName(file.getOriginalFilename());
+        image.setFileType(file.getContentType());
+        image.setImageUrl(url);
+        image.setPublicId(publicId);
+        image.setUser(user);
+      }
+
+      // Save the image
       return imageRepository.save(image);
     } catch (IOException e) {
       throw new RuntimeException("Cloudinary upload failed: " + e.getMessage(), e);

@@ -61,11 +61,43 @@ public class UserService implements IUserService {
   @Override
   public User updateUser(UserUpdateRequest request, Long userId) {
     return userRepository.findById(userId).map(existingUser -> {
-      existingUser.setFirstName(request.getFirstName());
-      existingUser.setLastName(request.getLastName());
+      // Update basic information
+      if (request.getFirstName() != null) {
+        existingUser.setFirstName(request.getFirstName());
+      }
+
+      if (request.getLastName() != null) {
+        existingUser.setLastName(request.getLastName());
+      }
+
+      // Update email if provided and different from existing email
+      if (request.getEmail() != null && !request.getEmail().equals(existingUser.getEmail())) {
+        // Check if the new email is already in use by another user
+        if (userRepository.existsByEmail(request.getEmail())) {
+          throw new AlreadyExistException("The email " + request.getEmail() + " is already in use!");
+        }
+        existingUser.setEmail(request.getEmail());
+      }
+
+      // Update password if provided
+      if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+        existingUser.setPassword(passwordEncoder.encode(request.getPassword()));
+      }
+
+      // Update gender if provided
+      if (request.getGender() != null) {
+        existingUser.setGender(request.getGender());
+      }
+
+      // Note: We're not updating the role as it's a security concern
+
       return userRepository.save(existingUser);
     }).orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+  }
 
+  @Override
+  public User saveUser(User user) {
+    return userRepository.save(user);
   }
 
   @Override
@@ -110,5 +142,4 @@ public class UserService implements IUserService {
     String email = authentication.getName();
     return userRepository.findByEmail(email);
   }
-
 }

@@ -2,8 +2,8 @@ package com.mohamedheshsam.main.dtos;
 
 import java.util.List;
 
+import com.mohamedheshsam.main.enums.Gender;
 import com.mohamedheshsam.main.enums.RoleType;
-import com.mohamedheshsam.main.dtos.ImageDto;
 
 import lombok.Data;
 
@@ -17,4 +17,5 @@ public class UserDto {
   private CartDto cart;
   private RoleType role;
   private ImageDto image;
+  private Gender gender;
 }
