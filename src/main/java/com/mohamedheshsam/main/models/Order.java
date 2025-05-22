@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mohamedheshsam.main.enums.OrderStatus;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -35,6 +36,7 @@ public class Order {
   private LocalDate orderDate;
   private BigDecimal totalAmount;
   @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
   private OrderStatus status;
 
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)

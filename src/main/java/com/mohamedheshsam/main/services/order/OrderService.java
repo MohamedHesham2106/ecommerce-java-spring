@@ -15,6 +15,7 @@ import com.mohamedheshsam.main.models.Cart;
 import com.mohamedheshsam.main.models.Order;
 import com.mohamedheshsam.main.models.OrderItem;
 import com.mohamedheshsam.main.models.Product;
+import com.mohamedheshsam.main.requests.UpdateOrderStatusRequest;
 import com.mohamedheshsam.main.respository.CartRepository;
 import com.mohamedheshsam.main.respository.OrderRepository;
 import com.mohamedheshsam.main.respository.ProductRepository;
@@ -134,11 +135,18 @@ public class OrderService implements IOrderService {
   }
 
   @Override
-  public Boolean updateOrderStatus(Long orderId, String status) {
+  public Boolean updateOrderStatus(Long orderId, UpdateOrderStatusRequest request) {
     Order order = orderRepository.findById(orderId)
         .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
-    order.setStatus(OrderStatus.valueOf(status));
+
+    order.setStatus(request.getStatus());
     orderRepository.save(order);
     return true;
+  }
+
+  @Override
+  public List<OrderDto> getAllOrders() {
+    List<Order> orders = orderRepository.findAll();
+    return orders.stream().map(this::convertToDto).toList();
   }
 }
