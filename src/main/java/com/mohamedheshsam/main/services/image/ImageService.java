@@ -11,7 +11,6 @@ import com.mohamedheshsam.main.respository.ImageRepository;
 import com.mohamedheshsam.main.respository.UserRepository;
 import com.mohamedheshsam.main.services.products.IProductService;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -33,10 +32,11 @@ public class ImageService implements IImageService {
   private final UserRepository userRepository;
   private Cloudinary cloudinary;
 
+  @Value("${CLOUDINARY_URL}")
+  private String cloudinaryUrl;
+
   @PostConstruct
   public void init() {
-    Dotenv dotenv = Dotenv.load();
-    String cloudinaryUrl = dotenv.get("CLOUDINARY_URL");
     cloudinary = new Cloudinary(cloudinaryUrl);
   }
 
