@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 spring:
   servlet:
@@ -14,19 +14,19 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: ${HIBERNATE_DDL_AUTO:update}
       dialect: org.hibernate.dialect.MySQLDialect
-    show-sql: true
+    show-sql: ${SHOW_SQL:false}
     properties:
       hibernate:
-        format_sql: true
+        format_sql: ${FORMAT_SQL:false}
         ddl:
-          auto: update
+          auto: ${HIBERNATE_DDL_AUTO:update}
 
 api:
-  prefix: /api/v1
+  prefix: ${API_PREFIX:/api/v1}
 
 auth:
   token:
-    expiration: PT720H
-    jwtSecret: 36763979244226452948404D635166546A576D5A7134743777217A25432A462D
+    expiration: ${TOKEN_EXPIRATION}
+    jwtSecret: ${JWT_SECRET}
