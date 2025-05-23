@@ -1,9 +1,11 @@
 package com.mohamedheshsam.main.security.config;
 
 import java.util.List;
+import java.util.Arrays;
 
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
@@ -35,6 +37,21 @@ public class ShopConfig {
   private final JwtAuthEntryPoint authEntryPoint;
 
   private static final List<String> SECURED_URLS = List.of("/api/v1/carts/**", "/api/v1/cartItems/**");
+
+  @Value("${cors.allowed-origins:http://localhost:4200}")
+  private String allowedOrigins;
+
+  @Value("${cors.allowed-methods:GET,POST,PUT,DELETE,OPTIONS,PATCH}")
+  private String allowedMethods;
+
+  @Value("${cors.allowed-headers:Origin,Content-Type,Accept,Authorization,X-Requested-With}")
+  private String allowedHeaders;
+
+  @Value("${cors.allow-credentials:true}")
+  private boolean allowCredentials;
+
+  @Value("${cors.max-age:3600}")
+  private long maxAge;
 
   @Bean
   public ModelMapper modelMapper() {
@@ -69,8 +86,17 @@ public class ShopConfig {
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
     http
-        .cors(cors -> {
-        }).csrf(AbstractHttpConfigurer::disable)
+        .cors(cors -> cors.configurationSource(request -> {
+          var corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
+          corsConfiguration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+          corsConfiguration.setAllowedMethods(Arrays.asList(allowedMethods.split(",")));
+          corsConfiguration.setAllowedHeaders(Arrays.asList(allowedHeaders.split(",")));
+          corsConfiguration.setExposedHeaders(Arrays.asList("Authorization"));
+          corsConfiguration.setAllowCredentials(allowCredentials);
+          corsConfiguration.setMaxAge(maxAge);
+          return corsConfiguration;
+        }))
+        .csrf(AbstractHttpConfigurer::disable)
         .exceptionHandling(exception -> exception.authenticationEntryPoint(authEntryPoint))
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth.requestMatchers(SECURED_URLS.toArray(String[]::new)).authenticated()
@@ -78,7 +104,6 @@ public class ShopConfig {
     http.authenticationProvider(daoAuthenticationProvider());
     http.addFilterBefore(authTokenFilter(), UsernamePasswordAuthenticationFilter.class);
     return http.build();
-
   }
 
   @Bean
@@ -87,10 +112,12 @@ public class ShopConfig {
       @Override
       public void addCorsMappings(@NonNull CorsRegistry registry) {
         registry.addMapping("/**") // Apply to all endpoints
-            .allowedOrigins("*") // Allow this origin
-            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Allow these HTTP methods
-            .allowedHeaders("*") // Allow all headers
-            .allowCredentials(false); // Allow credentials
+            .allowedOriginPatterns(allowedOrigins.split(",")) // Use allowedOriginPatterns instead of allowedOrigins
+            .allowedMethods(allowedMethods.split(","))
+            .allowedHeaders(allowedHeaders.split(","))
+            .exposedHeaders("Authorization")
+            .allowCredentials(allowCredentials)
+            .maxAge(maxAge);
       }
     };
   }
