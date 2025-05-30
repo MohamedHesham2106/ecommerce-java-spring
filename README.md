@@ -13,6 +13,7 @@ This API provides endpoints for managing users, products, categories, carts, ord
 - [Orders](#orders)
 - [Image Management](#image-management)
 - [Data Transfer Objects (DTOs)](#data-transfer-objects-dtos)
+- [Environment Configuration](#environment-configuration)
 
 ---
 
@@ -1153,3 +1154,95 @@ The API uses Cloudinary to store and manage images. The following operations are
   - `publicId`: String - Cloudinary public ID
   - `product`: Product - Associated product (ManyToOne)
   - `user`: User - Associated user (OneToOne)
+
+## Environment Configuration
+
+This API uses environment variables for configuration. Follow these steps to set up your environment:
+
+### 1. Import Dotenv in Main Application
+
+Add the Dotenv initialization to your main application class:
+
+```java
+package com.mohamedheshsam.main;
+
+import io.github.cdimascio.dotenv.Dotenv;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class MainApplication {
+
+  public static void main(String[] args) {
+    // Load environment variables from .env file
+    Dotenv dotenv = Dotenv.configure().load();
+    System.setProperty("server.port", dotenv.get("SERVER_PORT", "8080"));
+
+    SpringApplication.run(MainApplication.class, args);
+  }
+}
+```
+
+### 2. Create .env File
+
+Create a `.env` file in the root directory with the following variables (replace with your own values):
+
+```properties
+# Server Configuration
+SERVER_PORT=8080
+SPRING_PROFILES_ACTIVE=dev
+
+# Database Configuration
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_DB=ecommerce
+MYSQL_USER=root
+MYSQL_PASS=password
+
+# Cloudinary Configuration (for image storage)
+CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>
+
+# JWT Authentication
+JWT_SECRET=YourSecretKeyHere
+TOKEN_EXPIRATION=PT720H  # 30 days
+
+# Hibernate Configuration
+HIBERNATE_DDL_AUTO=update
+SHOW_SQL=true
+FORMAT_SQL=true
+
+# API Configuration
+API_PREFIX=/api/v1
+
+# CORS Configuration
+CORS_ALLOWED_ORIGINS=http://localhost:4200
+CORS_ALLOWED_METHODS=GET,POST,PUT,DELETE,OPTIONS,PATCH
+CORS_ALLOWED_HEADERS=Origin,Content-Type,Accept,Authorization,X-Requested-With
+CORS_ALLOW_CREDENTIALS=true
+CORS_MAX_AGE=3600
+```
+
+### 3. Add Dotenv Dependency
+
+Make sure your `pom.xml` includes the dotenv dependency:
+
+```xml
+<dependency>
+    <groupId>io.github.cdimascio</groupId>
+    <artifactId>dotenv-java</artifactId>
+    <version>2.2.4</version>
+</dependency>
+```
+
+### 4. Use Environment Variables in Application
+
+You can access environment variables in your Spring application using:
+
+```java
+@Value("${MYSQL_HOST}")
+private String mysqlHost;
+```
+
+Or through Spring's configuration properties classes.
+
+**Note:** The `.env` file should never be committed to version control. Add it to your `.gitignore` file to prevent sensitive information from being exposed.
